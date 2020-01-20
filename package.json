@@ -1,0 +1,19 @@
+{
+  "name": "solar_pv_sizing_estimator",
+  "version": "1.0.0",
+  "description": "Estimator server for solar PV sizing.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BradHuang1999/Solar_PV_Sizing_Estimator.git"
+  },
+  "author": "Brad Huang",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/BradHuang1999/Solar_PV_Sizing_Estimator/issues"
+  },
+  "homepage": "https://github.com/BradHuang1999/Solar_PV_Sizing_Estimator#readme"
+}
