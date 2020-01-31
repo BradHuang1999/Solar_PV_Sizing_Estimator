@@ -15,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/BradHuang1999/Solar_PV_Sizing_Estimator/issues"
   },
-  "homepage": "https://github.com/BradHuang1999/Solar_PV_Sizing_Estimator#readme"
+  "homepage": "https://github.com/BradHuang1999/Solar_PV_Sizing_Estimator#readme",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "express": "^4.17.1",
+    "util": "^0.12.1"
+  }
 }
