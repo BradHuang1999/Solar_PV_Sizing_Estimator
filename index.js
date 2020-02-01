@@ -1,9 +1,9 @@
 const express = require('express')
 const app = express();
 
-// const bodyParser = require('body-parser');
-// app.use(bodyParser.json()); // support json encoded bodies
-// app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+const bodyParser = require('body-parser');
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
@@ -11,13 +11,21 @@ const exec = util.promisify(require('child_process').exec);
 const cd_folder = 'cd estimation_compiled; ';
 
 app.get('/', async (req, res) => {
-    const est_type = req.query['estimation_type'];
 
-    if (est_type === 'lolp') {
-        input_sim = cd_folder + './sim 2000 500 0 0.01 0.95 100 load.txt pv.txt;'
+    const {
+        estimation_type,
+        pv_price_per_kw,
+        battery_price_per_kwh,
+        epsilon_target,
+        confidence_level,
+        days_in_sample
+    } = req.body;
+
+    if (estimation_type === 'lolp') {
+        input_sim = `${cd_folder} ./sim ${pv_price_per_kw} ${battery_price_per_kwh} 0 ${epsilon_target} ${confidence_level} ${days_in_sample} load.txt pv.txt;`
         promise_sim = exec(input_sim);
 
-        input_snc = cd_folder + './snc_lolp 2000 500 0.01 0.95 100 load.txt pv.txt;'
+        input_snc = `${cd_folder} ./snc_lolp ${pv_price_per_kw} ${battery_price_per_kwh} ${epsilon_target} ${confidence_level} ${days_in_sample} load.txt pv.txt;`
         promise_snc = exec(input_snc);
 
         Promise
@@ -31,13 +39,22 @@ app.get('/', async (req, res) => {
                     console.log(msg);
                     res.send(msg);
                 } else {
-                    output_sim_str = output_sim.stdout.split("\t").join("\n");
-                    output_snc_str = output_snc.stdout.split("\t").join("\n");
+                    output_sim_str = output_sim.stdout.split("\t");
+                    output_snc_str = output_snc.stdout.split("\t");
 
-                    msg =
-                        "LOLP Results:" + "\n\n" +
-                        "Sim:\n" + output_sim_str + "\n" +
-                        "SNC:\n" + output_snc_str + "\n";
+                    msg = {
+                        type: 'lolp',
+                        sim: {
+                            pv_kw: parseFloat(output_sim_str[0]),
+                            battery_kwh: parseFloat(output_sim_str[1]),
+                            total_cost: parseFloat(output_sim_str[2])
+                        },
+                        snc: {
+                            pv_kw: parseFloat(output_snc_str[0]),
+                            battery_kwh: parseFloat(output_snc_str[1]),
+                            total_cost: parseFloat(output_snc_str[2])
+                        }
+                    }
 
                     console.log(msg);
                     res.send(msg);
@@ -48,11 +65,11 @@ app.get('/', async (req, res) => {
                 console.log(msg);
                 res.send(msg);
             });
-    } else if (est_type == 'eue') {
-        input_sim = cd_folder + './sim 2000 500 1 0.05 0.95 100 load.txt pv.txt;'
+    } else if (estimation_type == 'eue') {
+        input_sim = `${cd_folder} ./sim ${pv_price_per_kw} ${battery_price_per_kwh} 1 ${epsilon_target} ${confidence_level} ${days_in_sample} load.txt pv.txt;`
         promise_sim = exec(input_sim);
 
-        input_snc = cd_folder + './snc_eue 2000 500 0.05 0.95 100 load.txt pv.txt;'
+        input_snc = `${cd_folder} ./snc_eue ${pv_price_per_kw} ${battery_price_per_kwh} ${epsilon_target} ${confidence_level} ${days_in_sample} load.txt pv.txt;`
         promise_snc = exec(input_snc);
 
         Promise
@@ -66,13 +83,22 @@ app.get('/', async (req, res) => {
                     console.log(msg);
                     res.send(msg);
                 } else {
-                    output_sim_str = output_sim.stdout.split("\t").join("\n");
-                    output_snc_str = output_snc.stdout.split("\t").join("\n");
+                    output_sim_str = output_sim.stdout.split("\t");
+                    output_snc_str = output_snc.stdout.split("\t");
 
-                    msg =
-                        "EUE Results:" + "\n\n" +
-                        "Sim:\n" + output_sim_str + "\n" +
-                        "SNC:\n" + output_snc_str + "\n";
+                    msg = {
+                        type: 'eue',
+                        sim: {
+                            pv_kw: parseFloat(output_sim_str[0]),
+                            battery_kwh: parseFloat(output_sim_str[1]),
+                            total_cost: parseFloat(output_sim_str[2])
+                        },
+                        snc: {
+                            pv_kw: parseFloat(output_snc_str[0]),
+                            battery_kwh: parseFloat(output_snc_str[1]),
+                            total_cost: parseFloat(output_snc_str[2])
+                        }
+                    }
 
                     console.log(msg);
                     res.send(msg);
