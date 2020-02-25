@@ -1,0 +1,127 @@
+<form class="container" [formGroup]="inputForm">
+  <h2>Solar PV and Battery Cost Estimator</h2>
+
+  <div class="row">
+    <mat-form-field class="example-full-width">
+      <input type="number" matInput placeholder="PV cost per KW" formControlName="pv_price_per_kw">
+    </mat-form-field>
+
+    <mat-form-field class="example-full-width">
+      <input type="number" matInput placeholder="Battery cost per KWh" formControlName="battery_price_per_kwh">
+    </mat-form-field>
+
+    <mat-form-field class="example-full-width">
+      <input type="number" matInput placeholder="Confidence Level" formControlName="confidence_level">
+    </mat-form-field>
+  
+    <mat-form-field class="example-full-width">
+      <input type="number" matInput placeholder="Days In Sample" formControlName="days_in_sample">
+    </mat-form-field>
+  </div>
+
+  <div class="row radioArea">
+    <div class="radioButton">
+      <div class="radioLabel">
+        <label>Estimation Type</label>
+      </div>
+      <div>
+        <mat-radio-group aria-label="Estimation Type" formControlName="estimation_type">
+          <mat-radio-button value="lolp">LOLP</mat-radio-button><br>
+          <mat-radio-button value="eue">EUE</mat-radio-button><br>
+        </mat-radio-group>
+      </div>
+    </div>
+
+    <mat-form-field class="example-full-width">
+      <input type="number" matInput placeholder="Target" formControlName="epsilon_target">
+    </mat-form-field>
+
+    <div class="radioButton">
+      <div class="radioLabel">
+        <label>PV Estimation Input</label>
+      </div>
+      <div>
+        <mat-radio-group aria-label="PV Estimation Input" formControlName="pv_input_type">
+          <mat-radio-button value="input_file">File Upload</mat-radio-button><br>
+          <mat-radio-button value="lat_lon">Estimation Using Lat/Lon (Coming soon)</mat-radio-button><br>
+        </mat-radio-group>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="form-group">
+      <div>
+        <label for="load_file">Hourly Electricity Load File</label>
+      </div>
+      <div class="subrow">
+        <input type="file"
+               id="load_file"
+               (change)="onLoadFileChange($event.target.files)">
+      </div>
+      <div class="subrow">
+        <mat-form-field>
+          <textarea matInput cols="50" rows="10"
+                    formControlName="load_text"
+                    placeholder="Hourly Electricity Load"></textarea>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div *ngIf="inputForm.value.pv_input_type === 'input_file'">
+    <!-- <div> -->
+      <div>
+        <label for="pv_file">Hourly PV Radiation File</label>
+      </div>
+      <div class="subrow">
+        <input type="file"
+               id="pv_file"
+               (change)="onPVFileChange($event.target.files)">
+      </div>
+      <div class="subrow">
+        <mat-form-field>
+          <textarea matInput cols="50" rows="10"
+                    formControlName="pv_text"
+                    placeholder="Hourly PV Radiation"></textarea>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div *ngIf="inputForm.value.pv_input_type === 'lat_lon'">
+    <!-- <div> -->
+      <div>
+        <label>Location</label>
+      </div>
+      <div class="subrow">
+        <mat-form-field class="example-full-width">
+          <mat-label>Latitude</mat-label>
+          <input type="number"
+                 matInput
+                 placeholder="+ for N, - for S"
+                 formControlName="lat">
+        </mat-form-field>
+      </div>
+      <div>
+        <mat-form-field class="example-full-width">
+          <mat-label>Longitude</mat-label>
+          <input type="number"
+                 matInput
+                 placeholder="+ for E, - for W"
+                 formControlName="lon">
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="validationMsg !== ''" class="row alert alert-danger" role="alert">
+    {{this.validationMsg}}
+  </div>
+
+  <div class="row submit">
+    <button mat-raised-button color="primary" (click)="submit()">Submit</button>
+  </div>
+
+  <div *ngIf="resultMsg !== ''" class="row">
+    <pre>{{this.resultMsg}}</pre>
+  </div>
+</form>

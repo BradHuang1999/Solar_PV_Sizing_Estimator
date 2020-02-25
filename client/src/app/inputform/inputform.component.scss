@@ -1,0 +1,45 @@
+.container{
+    margin: 20px;
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+
+    margin: 2rem;
+
+    mat-form-field {
+        margin-right: 3rem;
+    }
+
+    mat-radio-button {
+        margin-top: 0.5rem;
+    }
+}
+
+.submit{
+    margin-top: 1rem;
+}
+
+.row{
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.subrow {
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.radioArea{
+    display: flex;
+    margin-top: 1rem;
+
+    .radioButton{
+        margin-right: 2rem;
+        display: flex;
+    }
+
+    .radioLabel{
+        padding-top: 0.5rem;
+        padding-right: 1rem;;
+    }
+}
