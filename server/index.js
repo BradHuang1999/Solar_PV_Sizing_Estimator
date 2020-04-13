@@ -1,7 +1,7 @@
+const axios = require('axios');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const express = require('express');
-const util = require('util');
 const cp = require('child_process');
 
 const app = express();
@@ -9,8 +9,6 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: '2mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
-
-const exec = util.promisify(cp.exec);
 
 function ab2str(buf) {
     return String.fromCharCode.apply(null, new Uint16Array(buf));
@@ -41,8 +39,8 @@ function process_input(type, promise_sim, promise_snc) {
                     msg.sim = {
                         success: 1,
                         value: {
-                            pv_kw: parseFloat(output_sim_str[0]),
-                            battery_kwh: parseFloat(output_sim_str[1]),
+                            battery_kwh: parseFloat(output_sim_str[0]),
+                            pv_kw: parseFloat(output_sim_str[1]),
                             total_cost: parseFloat(output_sim_str[2])
                         }
                     }
@@ -59,8 +57,8 @@ function process_input(type, promise_sim, promise_snc) {
                     msg.snc = {
                         success: 1,
                         value: {
-                            pv_kw: parseFloat(output_snc_str[0]),
-                            battery_kwh: parseFloat(output_snc_str[1]),
+                            battery_kwh: parseFloat(output_snc_str[0]),
+                            pv_kw: parseFloat(output_snc_str[1]),
                             total_cost: parseFloat(output_snc_str[2])
                         }
                     }
@@ -70,20 +68,34 @@ function process_input(type, promise_sim, promise_snc) {
             })
             .catch(reason => {
                 let msg = {
-                    type: type,
-                    sim: {
-                        success: 0,
-                        value: reason
-                    },
-                    snc: {
-                        success: 0,
-                        value: reason
-                    }
+                    type: 'error',
+                    reason: reason
                 }
 
                 resolve(msg);
             });
     });
+}
+
+function get_pv_watts_metrics(lat, lon, pv_tilt, pv_azimuth, pv_module_type, pv_array_type, pv_losses) {
+    pv_watts_params = {
+        api_key: "K3qAWw3MrlOi0CHKtYrI3JeQjnsdsfq50OLULCiD",
+        system_capacity: 1,
+        losses: pv_losses,
+        lat: lat,
+        lon: lon,
+        module_type: pv_module_type,
+        array_type: pv_array_type,
+        tilt: pv_tilt,
+        azimuth: pv_azimuth,
+        timeframe: 'hourly'
+    };
+
+    function get_axios_pv_watts_promise(dataset) {
+        return axios.get(`https://developer.nrel.gov/api/pvwatts/v6.json?dataset=${dataset}`, {params: pv_watts_params});
+    }
+
+    return get_axios_pv_watts_promise('tmy3');
 }
 
 app.post('/', async (req, res) => {
@@ -98,34 +110,48 @@ app.post('/', async (req, res) => {
         pv_input_type,
         lat,
         lon,
+        pv_tilt,
+        pv_azimuth,
+        pv_module_type,
+        pv_array_type,
+        pv_losses,
         load_text,
-        pv_text
+        pv_text,
     } = req.body;
 
-    load_text = load_text.trim();
-    pv_text = pv_text.trim();
+    if (load_text) {
+        load_text = load_text.trim();
+        load_len = load_text.split("\n").length;
+    }
 
-    load_len = load_text.split("\n").length;
-    pv_len = pv_text.split("\n").length;
-
-    console.log(
-        estimation_type,
-        pv_price_per_kw,
-        battery_price_per_kwh,
-        epsilon_target,
-        confidence_level,
-        days_in_sample,
-        pv_input_type,
-        lat,
-        lon,
-        load_len,
-        pv_len
-    )
+    if (pv_text) {
+        pv_text = pv_text.trim();
+        pv_len = pv_text.split("\n").length;
+    }
 
     let msg = {};
 
     function spawn_promise(exec_binary_command, estimation_zero_one) {
-        return new Promise((resolve, reject) => {
+        console.log(
+            estimation_type,
+            pv_price_per_kw,
+            battery_price_per_kwh,
+            epsilon_target,
+            confidence_level,
+            days_in_sample,
+            pv_input_type,
+            lat,
+            lon,
+            pv_tilt,
+            pv_azimuth,
+            pv_module_type,
+            pv_array_type,
+            pv_losses,
+            load_len,
+            pv_len,
+        );
+
+        return new Promise(resolve => {
             let args = []
 
             args.push(pv_price_per_kw);
@@ -139,21 +165,14 @@ app.post('/', async (req, res) => {
             args.push(confidence_level);
             args.push(days_in_sample);
 
-            if (pv_input_type === "input_file") {
-                args.push("--");
-                args.push(load_len);
-                args.push("--");
-                args.push(pv_len);
-            } else {
-                args.push("estimation_compiled/load.txt");
-                args.push("estimation_compiled/pv.txt");
-            }
+            args.push("--");
+            args.push(load_len);
+            args.push("--");
+            args.push(pv_len);
 
             let child = cp.spawn(exec_binary_command, args);
 
-            if (pv_input_type === "input_file") {
-                child.stdin.write(load_text + "\n" + pv_text + "\n");
-            }
+            child.stdin.write(load_text + "\n" + pv_text + "\n");
 
             child.stdout.on('data', function (data_buffer) {
                 resolve({
@@ -167,6 +186,28 @@ app.post('/', async (req, res) => {
                 });
             });
         });
+    }
+
+    let pv_watts_data, ac;
+
+    if (pv_input_type === 'lat_lon') {
+        try {
+            pv_watts_data = await get_pv_watts_metrics(lat, lon, pv_tilt, pv_azimuth, pv_module_type, pv_array_type, pv_losses);
+            ac = pv_watts_data.data.outputs.ac;
+
+            pv_len = ac.length;
+            pv_text = ac.map(w => w / 1000).join('\n');
+        } catch(err) {
+            let msg = {
+                type: 'no_pv_watts_data',
+                input: {
+                    lat: lat,
+                    lon: lon
+                }
+            }
+
+            res.send(msg);
+        }
     }
 
     if (estimation_type === 'lolp') {

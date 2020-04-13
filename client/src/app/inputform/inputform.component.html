@@ -1,127 +1,239 @@
-<form class="container" [formGroup]="inputForm">
-  <h2>Solar PV and Battery Cost Estimator</h2>
+<div class="container">
 
-  <div class="row">
-    <mat-form-field class="example-full-width">
-      <input type="number" matInput placeholder="PV cost per KW" formControlName="pv_price_per_kw">
-    </mat-form-field>
+<h2>Solar PV and Battery Cost Estimator</h2> 
 
-    <mat-form-field class="example-full-width">
-      <input type="number" matInput placeholder="Battery cost per KWh" formControlName="battery_price_per_kwh">
-    </mat-form-field>
+<mat-horizontal-stepper linear #stepper>
 
-    <mat-form-field class="example-full-width">
-      <input type="number" matInput placeholder="Confidence Level" formControlName="confidence_level">
-    </mat-form-field>
-  
-    <mat-form-field class="example-full-width">
-      <input type="number" matInput placeholder="Days In Sample" formControlName="days_in_sample">
-    </mat-form-field>
-  </div>
-
-  <div class="row radioArea">
-    <div class="radioButton">
-      <div class="radioLabel">
-        <label>Estimation Type</label>
-      </div>
-      <div>
-        <mat-radio-group aria-label="Estimation Type" formControlName="estimation_type">
-          <mat-radio-button value="lolp">LOLP</mat-radio-button><br>
-          <mat-radio-button value="eue">EUE</mat-radio-button><br>
-        </mat-radio-group>
-      </div>
+  <!-- Step 1: Location/PV Gen -->
+  <mat-step [stepControl]="step_1.isUsingLatLon ? step_1.location_formgroup : step_1.pv_text_formgroup">
+    <div>
+      <button mat-raised-button (click)="step_1_onChangePVInput()">
+        {{ step_1.isUsingLatLon ? 'Manually Input PV Generation Parameters Instead' : 'Use Location Instead' }}
+      </button>
     </div>
 
-    <mat-form-field class="example-full-width">
-      <input type="number" matInput placeholder="Target" formControlName="epsilon_target">
-    </mat-form-field>
-
-    <div class="radioButton">
-      <div class="radioLabel">
-        <label>PV Estimation Input</label>
-      </div>
-      <div>
-        <mat-radio-group aria-label="PV Estimation Input" formControlName="pv_input_type">
-          <mat-radio-button value="input_file">File Upload</mat-radio-button><br>
-          <mat-radio-button value="lat_lon">Estimation Using Lat/Lon (Coming soon)</mat-radio-button><br>
-        </mat-radio-group>
-      </div>
+    <div class="row">
+      <ng-template matStepLabel>
+        {{ step_1.isUsingLatLon ? 'My Location' : 'Hourly PV Radiation File' }}
+      </ng-template>
     </div>
-  </div>
 
-  <div class="row">
-    <div class="form-group">
-      <div>
-        <label for="load_file">Hourly Electricity Load File</label>
+    <div>
+      <form [formGroup]="step_1.location_formgroup" *ngIf="step_1.isUsingLatLon">
+        <div class="subrow">
+          <div>
+            <label>Location</label>
+          </div>
+          <div>
+            <mat-form-field required>
+              <mat-label>Latitude</mat-label>
+              <input matInput required type="number" formControlName="lat"
+                    placeholder="+ for N, - for S">
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field required>
+              <mat-label>Longitude</mat-label>
+              <input matInput required type="number" formControlName="lon"
+                    placeholder="+ for E, - for W">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div>
+          <button mat-raised-button color="primary"
+                  matStepperNext
+                  (click)="step_1_lat_lon_onNext()">Next</button>
+        </div>
+      </form>
+
+      <form [formGroup]="step_1.pv_text_formgroup" *ngIf="!step_1.isUsingLatLon">
+        <div class="subrow">
+          <input mat-input type="file" id="pv_file"
+                (change)="step_1_onPVFileChange($event.target.files)">
+        </div>
+        <div class="subrow">
+          <mat-form-field>
+            <textarea matInput required cols="50" rows="10"
+                      formControlName="pv_text"
+                      placeholder="Hourly PV Radiation"></textarea>
+          </mat-form-field>
+        </div>
+
+        <div>
+          <button mat-raised-button color="primary" matStepperNext>Next</button>
+        </div>
+      </form>
+    </div>
+  </mat-step>
+
+  <!-- Step 2: PV Parameters (Only Needed for Lat/Lon Estimation) -->
+  <mat-step [stepControl]="step_2.pv_params_formgroup" *ngIf="step_1.isUsingLatLon">
+    <form [formGroup]="step_2.pv_params_formgroup">
+      <ng-template matStepLabel>Solar Panel Parameters</ng-template>
+
+      <div class="row">
+        <div>
+          <div>
+            <label>Panel Position</label>
+          </div>
+          <div class="subrow">
+            <mat-form-field>
+              <mat-label>Tilt</mat-label>
+              <input type="number"
+                    matInput required
+                    placeholder="0 to 90"
+                    formControlName="pv_tilt">
+            </mat-form-field>
+          </div>
+          <div>
+            <mat-form-field>
+              <mat-label>Azimuth</mat-label>
+              <input type="number"
+                    matInput required
+                    placeholder="0 = N, 90 = E, 180 = S, 270 = W"
+                    formControlName="pv_azimuth">
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div>
+          <div>
+            <label>Solar Panel Type</label>
+          </div>
+          <div class="subrow">
+            <mat-form-field>
+              <mat-label>System Losses</mat-label>
+              <input type="number"
+                    matInput required
+                    placeholder="-5 to 99"
+                    formControlName="pv_losses">
+            </mat-form-field>
+          </div>
+          <div class="subrow">
+            <mat-form-field>
+              <mat-label>Module Type</mat-label>
+              <mat-select matInput required formControlName="pv_module_type">
+                <mat-option value="0">Standard</mat-option>
+                <mat-option value="1">Premium</mat-option>
+                <mat-option value="2">Thin film</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="subrow">
+            <mat-form-field>
+              <mat-label>Array Type</mat-label>
+              <mat-select matInput required formControlName="pv_array_type">
+                <mat-option value=0>Fixed - Open Rack</mat-option>
+                <mat-option value=1>Fixed - Roof Mounted</mat-option>
+                <mat-option value=2>1-Axis</mat-option>
+                <mat-option value=3>1-Axis Backtracking</mat-option>
+                <mat-option value=4>2-Axis</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
       </div>
+
+      <div>
+        <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+        <button mat-raised-button color="primary" matStepperNext>Next</button>
+      </div>
+    </form>
+  </mat-step>
+
+  <!-- Step 3: Load Estimation -->
+  <mat-step [stepControl]="step_3.load_text_formgroup">
+    <ng-template matStepLabel>Electricity Load Estimation</ng-template>
+
+    <form [formGroup]="step_3.load_text_formgroup">
       <div class="subrow">
         <input type="file"
-               id="load_file"
-               (change)="onLoadFileChange($event.target.files)">
+              id="load_file"
+              (change)="step_3_onLoadFileChange($event.target.files)">
       </div>
       <div class="subrow">
         <mat-form-field>
-          <textarea matInput cols="50" rows="10"
+          <textarea matInput required cols="50" rows="10"
                     formControlName="load_text"
                     placeholder="Hourly Electricity Load"></textarea>
         </mat-form-field>
       </div>
+    </form>
+
+    <div>
+      <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+      <button mat-raised-button color="primary" matStepperNext>Next</button>
+    </div>
+  </mat-step>
+
+  <!-- Step 4: Estimation Parameters -->
+  <mat-step [stepControl]="step_4.est_params_formgroup">
+    <ng-template matStepLabel>Estimation Parameters</ng-template>
+    
+    <form [formGroup]="step_4.est_params_formgroup">
+      <mat-form-field>
+        <input type="number" matInput required
+               formControlName="pv_price_per_kw"
+               placeholder="PV cost per KW">
+      </mat-form-field>
+  
+      <mat-form-field>
+        <input type="number" matInput required
+               formControlName="battery_price_per_kwh"
+               placeholder="Battery cost per KWh">
+      </mat-form-field>
+  
+      <mat-form-field>
+        <input type="number" matInput required
+               formControlName="confidence_level"
+               placeholder="Confidence Level" >
+      </mat-form-field>
+    
+      <mat-form-field>
+        <input type="number" matInput required
+               formControlName="days_in_sample"
+               placeholder="Days In Sample" >
+      </mat-form-field>
+
+      <mat-form-field>
+        <input type="number" matInput required
+               formControlName="epsilon_target"
+               placeholder="Target">
+      </mat-form-field>
+
+      <div class="radioButton">
+        <div class="radioLabel">
+          <label>Estimation Type</label>
+        </div>
+        <div>
+          <mat-radio-group aria-label="Estimation Type" formControlName="estimation_type">
+            <mat-radio-button value="lolp">LOLP</mat-radio-button><br>
+            <mat-radio-button value="eue">EUE</mat-radio-button><br>
+          </mat-radio-group>
+        </div>
+      </div>
+    </form>
+
+    <div>
+      <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+      <button mat-raised-button color="primary" matStepperNext (click)="onSubmit()">Submit</button>
+    </div>
+  </mat-step>
+
+  <mat-step>
+    <ng-template matStepLabel>Results</ng-template>
+
+    <div *ngIf="resultMsg !== ''" class="row">
+      <pre>{{this.resultMsg}}</pre>
     </div>
 
-    <div *ngIf="inputForm.value.pv_input_type === 'input_file'">
-    <!-- <div> -->
-      <div>
-        <label for="pv_file">Hourly PV Radiation File</label>
-      </div>
-      <div class="subrow">
-        <input type="file"
-               id="pv_file"
-               (change)="onPVFileChange($event.target.files)">
-      </div>
-      <div class="subrow">
-        <mat-form-field>
-          <textarea matInput cols="50" rows="10"
-                    formControlName="pv_text"
-                    placeholder="Hourly PV Radiation"></textarea>
-        </mat-form-field>
-      </div>
+    <div>
+      <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+      <button mat-raised-button color="primary" (click)="stepper.reset()">Reset</button>
     </div>
+  </mat-step>
 
-    <div *ngIf="inputForm.value.pv_input_type === 'lat_lon'">
-    <!-- <div> -->
-      <div>
-        <label>Location</label>
-      </div>
-      <div class="subrow">
-        <mat-form-field class="example-full-width">
-          <mat-label>Latitude</mat-label>
-          <input type="number"
-                 matInput
-                 placeholder="+ for N, - for S"
-                 formControlName="lat">
-        </mat-form-field>
-      </div>
-      <div>
-        <mat-form-field class="example-full-width">
-          <mat-label>Longitude</mat-label>
-          <input type="number"
-                 matInput
-                 placeholder="+ for E, - for W"
-                 formControlName="lon">
-        </mat-form-field>
-      </div>
-    </div>
-  </div>
+</mat-horizontal-stepper> 
 
-  <div *ngIf="validationMsg !== ''" class="row alert alert-danger" role="alert">
-    {{this.validationMsg}}
-  </div>
-
-  <div class="row submit">
-    <button mat-raised-button color="primary" (click)="submit()">Submit</button>
-  </div>
-
-  <div *ngIf="resultMsg !== ''" class="row">
-    <pre>{{this.resultMsg}}</pre>
-  </div>
-</form>
+</div>
