@@ -77,7 +77,7 @@ function process_input(type, promise_sim, promise_snc) {
     });
 }
 
-function get_pv_watts_metrics(lat, lon, pv_tilt, pv_azimuth, pv_module_type, pv_array_type, pv_losses) {
+function get_pv_watts_metrics(lat, lon, pv_tilt, pv_azimuth, pv_module_type, pv_array_type, pv_losses, data_type) {
     pv_watts_params = {
         api_key: "K3qAWw3MrlOi0CHKtYrI3JeQjnsdsfq50OLULCiD",
         system_capacity: 1,
@@ -95,7 +95,7 @@ function get_pv_watts_metrics(lat, lon, pv_tilt, pv_azimuth, pv_module_type, pv_
         return axios.get(`https://developer.nrel.gov/api/pvwatts/v6.json?dataset=${dataset}`, {params: pv_watts_params});
     }
 
-    return get_axios_pv_watts_promise('tmy3');
+    return get_axios_pv_watts_promise(data_type);
 }
 
 app.post('/', async (req, res) => {
@@ -192,11 +192,11 @@ app.post('/', async (req, res) => {
 
     if (pv_input_type === 'lat_lon') {
         try {
-            pv_watts_data = await get_pv_watts_metrics(lat, lon, pv_tilt, pv_azimuth, pv_module_type, pv_array_type, pv_losses);
+            pv_watts_data = await get_pv_watts_metrics(lat, lon, pv_tilt, pv_azimuth, pv_module_type, pv_array_type, pv_losses, "tmy3");
             ac = pv_watts_data.data.outputs.ac;
 
             pv_len = ac.length;
-            pv_text = ac.map(w => w / 1000).join('\n');
+            pv_text = ac.map(w => (w / 1000).toFixed(8)).join('\n');
         } catch(err) {
             let msg = {
                 type: 'no_pv_watts_data',
@@ -212,15 +212,15 @@ app.post('/', async (req, res) => {
 
     if (estimation_type === 'lolp') {
 
-        promise_sim = spawn_promise("./estimation_compiled/sim", "0");
-        promise_snc = spawn_promise("./estimation_compiled/snc_lolp");
+        promise_sim = spawn_promise("./bin/Robust_Sizing/sim", "0");
+        promise_snc = spawn_promise("./bin/Robust_Sizing/snc_lolp");
 
         msg = await process_input('lolp', promise_sim, promise_snc);
 
     } else if (estimation_type == 'eue') {
 
-        promise_sim = spawn_promise("./estimation_compiled/sim", "1");
-        promise_snc = spawn_promise("./estimation_compiled/snc_eue");
+        promise_sim = spawn_promise("./bin/Robust_Sizing/sim", "1");
+        promise_snc = spawn_promise("./bin/Robust_Sizing/snc_eue");
 
         msg = await process_input('eue', promise_sim, promise_snc);
 
