@@ -1,6 +1,6 @@
 import { ApicallsService } from './../service/apicalls.service';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-inputform',
@@ -11,7 +11,7 @@ export class InputformComponent implements OnInit {
   step_1: {
     location_formgroup: FormGroup;
     pv_text_formgroup: FormGroup;
-    isUsingLatLon: boolean;
+    isUsingPVEstimation: boolean;
   }
 
   step_2: {
@@ -19,7 +19,9 @@ export class InputformComponent implements OnInit {
   }
 
   step_3: {
+    load_estimation_formgroup: FormGroup;
     load_text_formgroup: FormGroup;
+    isUsingLoadEstimation: boolean;
   }
 
   step_4: {
@@ -29,45 +31,54 @@ export class InputformComponent implements OnInit {
   validationMsg: string = "";
   resultMsg: string = "";
 
+  months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  load_monthly_examples = [341, 271.6, 244.9, 249, 189.1, 186, 176.7, 195.3, 222, 272.8, 294, 340]
+
   constructor(private api: ApicallsService, fb: FormBuilder) {
 
     this.step_1 = {
       location_formgroup: fb.group({
-        lat: [43, Validators.required],
-        lon: [-79, Validators.required],
+        lat: [43, [Validators.required, Validators.min(-90), Validators.max(90)]],
+        lon: [-79, [Validators.required, Validators.min(-90), Validators.max(90)]],
       }),
 
       pv_text_formgroup: fb.group({
         pv_text: ["", Validators.required],
       }),
 
-      isUsingLatLon: true,
+      isUsingPVEstimation: true,
     };
 
     this.step_2 = {
       pv_params_formgroup: fb.group({
-        pv_tilt: [0, Validators.required],
-        pv_azimuth: [180, Validators.required],
+        pv_tilt: [0, [Validators.required, Validators.min(0), Validators.max(90)]],
+        pv_azimuth: [180, [Validators.required, Validators.min(0), Validators.max(360)]],
         pv_module_type: ["0", Validators.required],
         pv_array_type: ["1", Validators.required],
-        pv_losses: [14, Validators.required],
+        pv_losses: [14, [Validators.required, Validators.min(0), Validators.max(99)]],
       })
     };
 
     this.step_3 = {
+      load_estimation_formgroup: fb.group({
+        load_monthly: fb.array(this.load_monthly_examples.map(m => new FormControl(m, [Validators.required, Validators.min(0)])))
+      }),
+
       load_text_formgroup: fb.group({
         load_text: ["", Validators.required]
-      })
+      }),
+
+      isUsingLoadEstimation: true
     };
 
     this.step_4 = {
       est_params_formgroup: fb.group({
         estimation_type: ["eue", Validators.required],
-        pv_price_per_kw: [2000, Validators.required],
-        battery_price_per_kwh: [500, Validators.required],
-        epsilon_target: [0.05, Validators.required],
-        confidence_level: [0.95, Validators.required],
-        days_in_sample: [100, Validators.required],
+        pv_price_per_kw: [2000, [Validators.required, Validators.min(0)]],
+        battery_price_per_kwh: [500, [Validators.required, Validators.min(0)]],
+        epsilon_target: [0.05, [Validators.required, Validators.min(0), Validators.max(1)]],
+        confidence_level: [0.95, [Validators.required, Validators.min(0.5), Validators.max(1)]],
+        days_in_sample: [100, [Validators.required, Validators.min(0)]],
       })
     };
   }
@@ -75,8 +86,12 @@ export class InputformComponent implements OnInit {
   ngOnInit() {
   }
 
+  id(i) {
+    return i;
+  }
+
   step_1_onChangePVInput() {
-    this.step_1.isUsingLatLon = !this.step_1.isUsingLatLon;
+    this.step_1.isUsingPVEstimation = !this.step_1.isUsingPVEstimation;
   }
 
   step_1_onPVFileChange(files: FileList) {
@@ -96,8 +111,12 @@ export class InputformComponent implements OnInit {
     // set tilt to latitude
     let step_1_latitude = this.step_1.location_formgroup.value.lat;
     this.step_2.pv_params_formgroup.patchValue({
-      pv_tilt: step_1_latitude
+      pv_tilt: Math.abs(step_1_latitude)
     });
+  }
+
+  step_3_onChangeLoadInput() {
+    this.step_3.isUsingLoadEstimation = !this.step_3.isUsingLoadEstimation;
   }
 
   step_3_onLoadFileChange(files: FileList) {
@@ -116,39 +135,19 @@ export class InputformComponent implements OnInit {
   onSubmit() {
     this.resultMsg = "Loading...";
 
-    let isUsingLatLon = this.step_1.isUsingLatLon;
-    let pv_input_type = isUsingLatLon ? "lat_lon" : "input_file";
-    let location_vals = this.step_1.location_formgroup.value;
-    let pv_text_vals = this.step_1.pv_text_formgroup.value;
-    let pv_params_vals = this.step_2.pv_params_formgroup.value;
-    let load_text_vals = this.step_3.load_text_formgroup.value;
-    let est_params_vals = this.step_4.est_params_formgroup.value;
-
-    let requestBody: any = {};
-
-    if (isUsingLatLon) {
-      requestBody.lat = location_vals.lat;
-      requestBody.lon = location_vals.lon;
-    } else {
-      requestBody.pv_text = pv_text_vals.pv_text;
+    let requestBody: any = {
+      pv: {
+        isUsingPVEstimation: this.step_1.isUsingPVEstimation,
+        pv_text: this.step_1.pv_text_formgroup.value.pv_text,
+        pv_params: {...this.step_1.location_formgroup.value, ...this.step_2.pv_params_formgroup.value}
+      },
+      load: {
+        isUsingLoadEstimation: this.step_3.isUsingLoadEstimation,
+        load_text: this.step_3.load_text_formgroup.value.load_text,
+        load_monthly_params: this.step_3.load_estimation_formgroup.value.load_monthly
+      },
+      sizing: this.step_4.est_params_formgroup.value
     }
-
-    requestBody.pv_input_type = pv_input_type;
-    
-    requestBody.pv_tilt = pv_params_vals.pv_tilt;
-    requestBody.pv_azimuth = pv_params_vals.pv_azimuth;
-    requestBody.pv_module_type = pv_params_vals.pv_module_type;
-    requestBody.pv_array_type = pv_params_vals.pv_array_type;
-    requestBody.pv_losses = pv_params_vals.pv_losses;
- 
-    requestBody.load_text = load_text_vals.load_text;
-
-    requestBody.estimation_type = est_params_vals.estimation_type;
-    requestBody.pv_price_per_kw = est_params_vals.pv_price_per_kw;
-    requestBody.battery_price_per_kwh = est_params_vals.battery_price_per_kwh;
-    requestBody.epsilon_target = est_params_vals.epsilon_target;
-    requestBody.confidence_level = est_params_vals.confidence_level;
-    requestBody.days_in_sample = est_params_vals.days_in_sample;
 
     console.log(requestBody);
 

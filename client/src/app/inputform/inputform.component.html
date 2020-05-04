@@ -5,52 +5,47 @@
 <mat-horizontal-stepper linear #stepper>
 
   <!-- Step 1: Location/PV Gen -->
-  <mat-step [stepControl]="step_1.isUsingLatLon ? step_1.location_formgroup : step_1.pv_text_formgroup">
-    <div>
+  <mat-step [stepControl]="step_1.isUsingPVEstimation ? step_1.location_formgroup : step_1.pv_text_formgroup">
+    <ng-template matStepLabel>{{ step_1.isUsingPVEstimation ? 'My Location' : 'Hourly PV Radiation File' }}</ng-template>
+
+    <div class="row">
       <button mat-raised-button (click)="step_1_onChangePVInput()">
-        {{ step_1.isUsingLatLon ? 'Manually Input PV Generation Parameters Instead' : 'Use Location Instead' }}
+        {{ step_1.isUsingPVEstimation ? 'Manually Input PV Generation Parameters Instead' : 'Use Location Instead' }}
       </button>
     </div>
 
-    <div class="row">
-      <ng-template matStepLabel>
-        {{ step_1.isUsingLatLon ? 'My Location' : 'Hourly PV Radiation File' }}
-      </ng-template>
-    </div>
-
     <div>
-      <form [formGroup]="step_1.location_formgroup" *ngIf="step_1.isUsingLatLon">
+      <form [formGroup]="step_1.location_formgroup" *ngIf="step_1.isUsingPVEstimation">
         <div class="subrow">
           <div>
             <label>Location</label>
           </div>
           <div>
-            <mat-form-field required>
+            <mat-form-field>
               <mat-label>Latitude</mat-label>
               <input matInput required type="number" formControlName="lat"
-                    placeholder="+ for N, - for S">
+                     placeholder="+ for N, - for S, [-90, 90]">
             </mat-form-field>
           </div>
           <div>
-            <mat-form-field required>
+            <mat-form-field>
               <mat-label>Longitude</mat-label>
               <input matInput required type="number" formControlName="lon"
-                    placeholder="+ for E, - for W">
+                     placeholder="+ for E, - for W, [-90, 90]">
             </mat-form-field>
           </div>
         </div>
 
         <div>
-          <button mat-raised-button color="primary"
-                  matStepperNext
+          <button mat-raised-button color="primary" matStepperNext
                   (click)="step_1_lat_lon_onNext()">Next</button>
         </div>
       </form>
 
-      <form [formGroup]="step_1.pv_text_formgroup" *ngIf="!step_1.isUsingLatLon">
+      <form [formGroup]="step_1.pv_text_formgroup" *ngIf="!step_1.isUsingPVEstimation">
         <div class="subrow">
-          <input mat-input type="file" id="pv_file"
-                (change)="step_1_onPVFileChange($event.target.files)">
+          <input type="file" id="pv_file"
+                 (change)="step_1_onPVFileChange($event.target.files)">
         </div>
         <div class="subrow">
           <mat-form-field>
@@ -68,10 +63,10 @@
   </mat-step>
 
   <!-- Step 2: PV Parameters (Only Needed for Lat/Lon Estimation) -->
-  <mat-step [stepControl]="step_2.pv_params_formgroup" *ngIf="step_1.isUsingLatLon">
+  <mat-step [stepControl]="step_2.pv_params_formgroup" *ngIf="step_1.isUsingPVEstimation">
+    <ng-template matStepLabel>Solar Panel Parameters</ng-template>
+    
     <form [formGroup]="step_2.pv_params_formgroup">
-      <ng-template matStepLabel>Solar Panel Parameters</ng-template>
-
       <div class="row">
         <div>
           <div>
@@ -82,7 +77,7 @@
               <mat-label>Tilt</mat-label>
               <input type="number"
                     matInput required
-                    placeholder="0 to 90"
+                    placeholder="[0, 90]"
                     formControlName="pv_tilt">
             </mat-form-field>
           </div>
@@ -91,7 +86,7 @@
               <mat-label>Azimuth</mat-label>
               <input type="number"
                     matInput required
-                    placeholder="0 = N, 90 = E, 180 = S, 270 = W"
+                    placeholder="0 = N, 90 = E, 180 = S, 270 = W. [0, 360)"
                     formControlName="pv_azimuth">
             </mat-form-field>
           </div>
@@ -106,7 +101,7 @@
               <mat-label>System Losses</mat-label>
               <input type="number"
                     matInput required
-                    placeholder="-5 to 99"
+                    placeholder="Percentage, [0, 99]"
                     formControlName="pv_losses">
             </mat-form-field>
           </div>
@@ -143,10 +138,35 @@
   </mat-step>
 
   <!-- Step 3: Load Estimation -->
-  <mat-step [stepControl]="step_3.load_text_formgroup">
+  <mat-step [stepControl]="step_3.isUsingLoadEstimation ? step_3.load_estimation_formgroup : step_3.load_text_formgroup">
     <ng-template matStepLabel>Electricity Load Estimation</ng-template>
 
-    <form [formGroup]="step_3.load_text_formgroup">
+    <div class="row">
+      <button mat-raised-button (click)="step_3_onChangeLoadInput()">
+        {{ step_3.isUsingLoadEstimation ? 'Manually Input Hourly Load Parameters Instead' : 'Use Load Estimation Instead' }}
+      </button>  
+    </div>  
+
+    <form [formGroup]="step_3.load_estimation_formgroup" *ngIf="step_3.isUsingLoadEstimation">
+      <div class="row">
+        <div>
+          <label>Enter your monthly electricity load in kWh:</label>
+        </div>
+        <div class="subrow">
+          <mat-form-field formArrayName="load_monthly"
+                          *ngFor="let ctrl of step_3.load_estimation_formgroup.controls.load_monthly.value; let i = index; trackBy: id">
+            <input required matInput type="number" placeholder="{{ months[i] }}" [formControlName]="i">
+          </mat-form-field>
+        </div>
+      </div>
+
+      <div>
+        <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+        <button mat-raised-button color="primary" matStepperNext>Next</button>
+      </div>
+    </form>
+
+    <form [formGroup]="step_3.load_text_formgroup" *ngIf="!step_3.isUsingLoadEstimation">
       <div class="subrow">
         <input type="file"
               id="load_file"
@@ -159,12 +179,12 @@
                     placeholder="Hourly Electricity Load"></textarea>
         </mat-form-field>
       </div>
-    </form>
 
-    <div>
-      <button mat-raised-button color="primary" matStepperPrevious>Back</button>
-      <button mat-raised-button color="primary" matStepperNext>Next</button>
-    </div>
+      <div>
+        <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+        <button mat-raised-button color="primary" matStepperNext>Next</button>
+      </div>
+    </form>
   </mat-step>
 
   <!-- Step 4: Estimation Parameters -->
@@ -187,19 +207,19 @@
       <mat-form-field>
         <input type="number" matInput required
                formControlName="confidence_level"
-               placeholder="Confidence Level" >
+               placeholder="Confidence Level, [0.5, 1]">
       </mat-form-field>
     
       <mat-form-field>
         <input type="number" matInput required
                formControlName="days_in_sample"
-               placeholder="Days In Sample" >
+               placeholder="Days In Sample">
       </mat-form-field>
 
       <mat-form-field>
         <input type="number" matInput required
                formControlName="epsilon_target"
-               placeholder="Target">
+               placeholder="Loss Target, [0, 1]">
       </mat-form-field>
 
       <div class="radioButton">
