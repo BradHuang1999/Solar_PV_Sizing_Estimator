@@ -1,6 +1,5 @@
 import os
 import ast
-import compress_pickle
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.arima.model import ARIMAResults
@@ -32,7 +31,7 @@ MODELS_DIR = os.environ.get("ARMA_MODELS_PATH")
 
 class KnnARIMAModelSimulator:
 
-    def __init__(self, arima_models_dir=MODELS_DIR, knn_n_neighbors=5, knn_metric='manhattan'):
+    def __init__(self, arima_models_dir=MODELS_DIR, knn_n_neighbors=5, knn_metric='manhattan', compress_pickle=True):
         '''
         Make a KnnARIMAModelSimulator.
 
@@ -53,6 +52,7 @@ class KnnARIMAModelSimulator:
         ## save params
         self.n_neighbors = knn_n_neighbors
         self.arima_models_dir = arima_models_dir
+        self.compress_pickle = compress_pickle
 
         ## get available stations
         available_station_ids = [f.split('_alpha')[0] for f in os.listdir(arima_models_dir)]
@@ -72,8 +72,15 @@ class KnnARIMAModelSimulator:
         self.knn_model = NearestNeighbors(n_neighbors=self.n_neighbors, metric=knn_metric).fit(self.monthly_norm_loads)
 
     def __get_arma_model(self, station_id):
-        station_filename = f"{self.arima_models_dir}{station_id}_alpha{ALPHA}.p.lzma"
-        return compress_pickle.load(station_filename)
+        if self.compress_pickle is True:
+            import compress_pickle
+            station_filename = f"{self.arima_models_dir}{station_id}_alpha{ALPHA}.p.lzma"
+            return compress_pickle.load(station_filename)
+        else:
+            import pickle
+            station_filename = f"{self.arima_models_dir}{station_id}_alpha{ALPHA}.p"
+            with open(station_filename, "rb") as f:
+                return pickle.load(f)
 
     def __simulate_arma_model(self, knn_arma_model, num_gen_traces):
 

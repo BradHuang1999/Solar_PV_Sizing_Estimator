@@ -27,7 +27,7 @@ async def run_simulate_load_trace(load_monthly_params):
 
     # print(f"starting run_simulate_load_trace")
     
-    simulator = KnnARIMAModelSimulator()
+    simulator = KnnARIMAModelSimulator(compress_pickle=False)
     gen_hourly = simulator.simulate_hourly_data(load_monthly_params, SIMULATE_NUM_LOAD_TRACE, False)
     
     # print(f"finishing run_simulate_load_trace")

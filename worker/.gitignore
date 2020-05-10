@@ -1,3 +1,4 @@
 __pycache__
+/load_trace_model/arma_models
 /load_trace_model/arma_models_compressed
 /load_trace_model/monthly_load_arrays.csv
