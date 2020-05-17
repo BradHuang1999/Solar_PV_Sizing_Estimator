@@ -17,9 +17,12 @@ PVWATTS_URL = "https://developer.nrel.gov/api/pvwatts/v6.json"
 PVWATTS_APIKEY = environ.get("PVWATTS_APIKEY")
 PVWATTS_SYSTEM_CAPACITY = 1
 PVWATTS_TIMEFRAME = "hourly"
-# PVWATTS_DATASETS = ["tmy2", "tmy3", "nsrdb", "intl"]
+PVWATTS_DATASETS = ["tmy2", "tmy3", "nsrdb", "intl"]
 
 SIMULATE_NUM_LOAD_TRACE = 4
+
+SIZING_LOSS_TARGETS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+# SIZING_LOSS_TARGETS = [0.01, 0.05, 0.1, 0.2, 0.5, 0.8]
 ##############################  END:CONSTANTS  ##############################
 
 
@@ -91,11 +94,8 @@ async def run_trace_estimation(load_params, pv_params):
         # print('starting get_pvwatts_solar_traces')
 
         async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
-            results = await asyncio.gather(
-                run_pv_watts(session, "tmy2", **pv_estimate_params),
-                run_pv_watts(session, "tmy3", **pv_estimate_params),
-                run_pv_watts(session, "nsrdb", **pv_estimate_params),
-                run_pv_watts(session, "intl", **pv_estimate_params))
+            tasks = [asyncio.create_task(run_pv_watts(session, dataset, **pv_estimate_params)) for dataset in PVWATTS_DATASETS]
+            results = await asyncio.gather(*tasks)
 
         ret = []
         for result in results:
@@ -171,7 +171,37 @@ async def run_robust_sizing(method, estimation_type, pv_price_per_kw, battery_pr
 
     # print(f"finishing {method}/{estimation_type}")
 
-    return p_stdout.decode(), p_stderr.decode()
+    return p_stdout.decode(), p_stderr.decode(), epsilon_target
+
+
+def parse_sizing_result(result):
+
+    out, err, target = result
+
+    if err:
+        if out:
+            return {
+                "success": 0,
+                "target": target,
+                "error": err
+            }
+        else:
+            return {
+                "success": 0,
+                "target": target,
+                "stdout": out,
+                "error": err
+            }
+
+    returns = list(map(float, out.split('\t')))
+
+    return {
+        "success": 1,
+        "target": target,
+        "battery_kwh": returns[0],
+        "pv_kw": returns[1],
+        "total_cost": returns[2]
+    }
 
 
 async def main():
@@ -181,36 +211,17 @@ async def main():
     load_list, pv_arr = await run_trace_estimation(input_data["load"], input_data["pv"])
     load_arr = np.hstack(load_list)
 
-    result = await asyncio.gather(
-        run_robust_sizing("sim", **input_data["sizing"], load_arr=load_arr, pv_arr=pv_arr),
-        run_robust_sizing("snc", **input_data["sizing"], load_arr=load_arr, pv_arr=pv_arr)
-    )
+    sizing_params = input_data["sizing"]
+    del sizing_params["epsilon_target"]
 
-    if result[0][1] or result[1][1]:
-        return {
-            "success": 0,
-            "sim": {
-                "error": result[0][1]
-            },
-            "snc": {
-                "error": result[1][1]
-            }
-        }
-    else:
-        sim = list(map(float, result[0][0].split('\t')))
-        snc = list(map(float, result[1][0].split('\t')))
-        return {
-            "success": 1,
-            "sim": {
-                "battery_kwh": sim[0],
-                "pv_kw": sim[1],
-                "total_cost": sim[2]
-            },
-            "snc": {
-                "battery_kwh": snc[0],
-                "pv_kw": snc[1],
-                "total_cost": snc[2]
-            }
-        }
+    sizing_tasks = [asyncio.create_task(run_robust_sizing(
+                        "sim", epsilon_target=target, **input_data["sizing"],
+                        load_arr=load_arr, pv_arr=pv_arr))
+                    for target in SIZING_LOSS_TARGETS]
+
+    result = await asyncio.gather(*sizing_tasks)
+
+    return list(map(parse_sizing_result, result))
+
 
 print(json.dumps(asyncio.run(main())))
