@@ -170,24 +170,28 @@ async def run_robust_sizing(method, estimation_type, pv_price_per_kw, battery_pr
 
     # print(f"finishing {method}/{estimation_type}")
 
-    return p_stdout.decode(), p_stderr.decode(), epsilon_target
+    return p_stdout.decode(), p_stderr.decode(), epsilon_target, arg, stdin_args
 
 
 def parse_sizing_result(result):
 
-    out, err, target = result
+    out, err, target, args, arrs = result
 
     if err:
         if out:
             return {
                 "success": 0,
                 "target": target,
+                "args": args,
+                "arrs": arrs,
                 "error": err
             }
         else:
             return {
                 "success": 0,
                 "target": target,
+                "args": args,
+                "arrs": arrs,
                 "stdout": out,
                 "error": err
             }
