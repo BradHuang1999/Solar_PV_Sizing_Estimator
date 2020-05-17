@@ -9,7 +9,7 @@ from asyncio.subprocess import create_subprocess_shell, PIPE
 from load_trace_model.simulate_models import KnnARIMAModelSimulator
 
 ############################## BEGIN:LOGGING ##############################
-logging.basicConfig(level=logging.DEBUG, filename="log", filemode="a", format="%(process)d - %(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.DEBUG, filename=environ.get("PV_LOG"), filemode="a", format="%(process)d - %(asctime)s - %(levelname)s - %(message)s")
 ##############################  END:LOGGING  ##############################
 
 ############################## BEGIN:CONSTANTS ##############################
