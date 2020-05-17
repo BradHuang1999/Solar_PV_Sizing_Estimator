@@ -33,16 +33,16 @@ SIZING_LOSS_TARGETS = [0.01, 0.05, 0.1, 0.15, 0.25, 0.5, 0.75]
 async def run_simulate_load_trace(load_monthly_params):
 
     logging.debug("starting run_simulate_load_trace")
-    
+
     simulator = KnnARIMAModelSimulator(compress_pickle=False)
     gen_hourly = simulator.simulate_hourly_data(load_monthly_params, SIMULATE_NUM_LOAD_TRACE, False)
-    
+
     logging.debug("finishing run_simulate_load_trace")
-    
+
     return gen_hourly
 
 
-async def run_pv_watts(session, dataset_type, lat, lon, 
+async def run_pv_watts(session, dataset_type, lat, lon,
                        pv_losses, pv_module_type, pv_array_type, pv_tilt, pv_azimuth):
 
     logging.debug(f"starting run_pv_watts with dataset_type={dataset_type}")
@@ -97,7 +97,7 @@ async def run_trace_estimation(load_params, pv_params):
         return i
 
     async def get_pv_traces(pv_estimate_params):
-        logging.debug('starting get_pvwatts_solar_traces')
+        logging.debug("starting get_pvwatts_solar_traces")
 
         async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as session:
             tasks = [asyncio.create_task(run_pv_watts(session, dataset, **pv_estimate_params)) for dataset in PVWATTS_DATASETS]
@@ -110,13 +110,13 @@ async def run_trace_estimation(load_params, pv_params):
                     for tr in result["outputs"]["ac"]:
                         ret.append(round(tr / 1000, 8))
                 else:
-                    logging.warning(f'run_pv_watts returns illegal input, params={pv_estimate_params}')
+                    logging.warning(f"run_pv_watts returns illegal input, params={pv_estimate_params}")
 
-        logging.debug('finishing get_pvwatts_solar_traces')
-        
+        logging.debug("finishing get_pvwatts_solar_traces")
+
         return ret
 
-    logging.debug('starting run_trace_estimation')
+    logging.debug("starting run_trace_estimation")
 
     if load_params["isUsingLoadEstimation"] is True:
         load_coro = asyncio.create_task(run_simulate_load_trace(load_params["load_monthly_params"]))
@@ -130,7 +130,7 @@ async def run_trace_estimation(load_params, pv_params):
 
     pv_arr, load_arr = await asyncio.gather(pv_coro, load_coro)
 
-    logging.debug('finishing run_trace_estimation')
+    logging.debug("finishing run_trace_estimation")
 
     return (load_arr, pv_arr)
 
@@ -139,7 +139,7 @@ async def run_robust_sizing(method, estimation_type, pv_price_per_kw, battery_pr
                             epsilon_target, confidence_level, days_in_sample, load_arr, pv_arr):
 
     logging.debug(f"starting run_robust_sizing, method={method}, estimation_type={estimation_type}, epsilon_target={epsilon_target}")
- 
+
     load_len = len(load_arr)
     pv_len = len(pv_arr)
 
@@ -161,7 +161,7 @@ async def run_robust_sizing(method, estimation_type, pv_price_per_kw, battery_pr
             args.append(0)
         else:
             args.append(1)
-    
+
     args.append(epsilon_target)
 
     args.append(confidence_level)
@@ -176,11 +176,11 @@ async def run_robust_sizing(method, estimation_type, pv_price_per_kw, battery_pr
 
     arg = " ".join(map(str, args))
     stdin_args = "\n".join(map(str, load_arr)) + "\n" + "\n".join(map(str, pv_arr)) + "\n"
-    
+
     logging.debug(f"create_subprocess_shell for run_robust_sizing, method={method}, estimation_type={estimation_type}, epsilon_target={epsilon_target}")
 
     p = await create_subprocess_shell(arg, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-    
+
     p_stdout, p_stderr = await p.communicate(stdin_args.encode())
 
     logging.debug(f"finishing run_robust_sizing, method={method}, estimation_type={estimation_type}, epsilon_target={epsilon_target}")
@@ -211,7 +211,7 @@ def parse_sizing_result(result):
                 "error": err
             }
 
-    returns = list(map(float, out.split('\t')))
+    returns = list(map(float, out.split("\t")))
 
     return {
         "success": 1,
