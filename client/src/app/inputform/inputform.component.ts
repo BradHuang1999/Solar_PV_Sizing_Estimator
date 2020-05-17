@@ -118,7 +118,7 @@ export class InputformComponent implements OnInit {
     }
   }
 
-  step_1_inferLocationUsingAddress(address: string) {
+  step_1_inferLocationUsingAddress() {
     let addr: string = this.step_1.address_formgroup.value.city;
     try {
       this.api.getLocationFromAddress(addr)
