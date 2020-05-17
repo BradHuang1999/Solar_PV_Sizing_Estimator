@@ -11,7 +11,21 @@ export class ApicallsService {
 
   constructor(private http: HttpClient) { }
 
-  postData(requrestBody: any): Observable<any> {
-    return this.http.post(environment.apiURL, requrestBody);
+  getPVSize(pvParams: any): Observable<any> {
+    return this.http.post(environment.apiURL, pvParams);
+  }
+
+  getLocationFromIP(): Observable<any> {
+    let ipParams = environment.production ? {} : { ip: '209.141.148.174' };
+
+    return this.http.get(environment.apiURL + "/getLocationFromIP", {
+      params: ipParams
+    });
+  }
+
+  getLocationFromAddress(address: string): Observable<any> {
+    return this.http.get(environment.apiURL + "/getLocationFromAddress", {
+      params: { address: address }
+    });
   }
 }

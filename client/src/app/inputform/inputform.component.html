@@ -15,32 +15,50 @@
     </div>
 
     <div>
-      <form [formGroup]="step_1.location_formgroup" *ngIf="step_1.isUsingPVEstimation">
-        <div class="subrow">
-          <div>
-            <label>Location</label>
-          </div>
-          <div>
+      <div *ngIf="step_1.isUsingPVEstimation">
+        <div class="row">
+          <label>First, your location please...</label>
+        </div>
+
+        <div class="row">
+          <button mat-raised-button (click)="step_1_inferLocationUsingIP()">Fill Location Using my IP Address</button>
+        </div>
+        
+        <div class="row">
+          <form [formGroup]="step_1.address_formgroup">
+            <mat-form-field>
+              <mat-label>Your City</mat-label>
+              <input matInput formControlName="city"
+                      placeholder="Seattle, WA, United States...">
+            </mat-form-field>
+            <button mat-raised-button (click)="step_1_inferLocationUsingAddress()">Autofill Location Using my City</button>
+          </form>
+        </div>
+        
+        <div class="row">
+          <form [formGroup]="step_1.location_formgroup">
             <mat-form-field>
               <mat-label>Latitude</mat-label>
               <input matInput required type="number" formControlName="lat"
-                     placeholder="+ for N, - for S, [-90, 90]">
+                      placeholder="+ for N, - for S, [-90, 90]">
             </mat-form-field>
-          </div>
-          <div>
             <mat-form-field>
               <mat-label>Longitude</mat-label>
               <input matInput required type="number" formControlName="lon"
-                     placeholder="+ for E, - for W, [-90, 90]">
+                      placeholder="+ for E, - for W, [-90, 90]">
             </mat-form-field>
-          </div>
+          </form>
+        </div>
+
+        <div class="row" style="color: red;">
+          {{this.step_1.errorMsg}}
         </div>
 
         <div>
           <button mat-raised-button color="primary" matStepperNext
                   (click)="step_1_lat_lon_onNext()">Next</button>
         </div>
-      </form>
+      </div>
 
       <form [formGroup]="step_1.pv_text_formgroup" *ngIf="!step_1.isUsingPVEstimation">
         <div class="subrow">
@@ -214,12 +232,6 @@
         <input type="number" matInput required
                formControlName="days_in_sample"
                placeholder="Days In Sample">
-      </mat-form-field>
-
-      <mat-form-field>
-        <input type="number" matInput required
-               formControlName="epsilon_target"
-               placeholder="Loss Target, [0, 1]">
       </mat-form-field>
 
       <div class="radioButton">

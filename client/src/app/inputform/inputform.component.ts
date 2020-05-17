@@ -9,9 +9,11 @@ import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms'
 })
 export class InputformComponent implements OnInit {
   step_1: {
+    address_formgroup: FormGroup;
     location_formgroup: FormGroup;
     pv_text_formgroup: FormGroup;
     isUsingPVEstimation: boolean;
+    errorMsg: string;
   }
 
   step_2: {
@@ -37,9 +39,13 @@ export class InputformComponent implements OnInit {
   constructor(private api: ApicallsService, fb: FormBuilder) {
 
     this.step_1 = {
+      address_formgroup: fb.group({
+        city: [""]
+      }),
+
       location_formgroup: fb.group({
         lat: [43, [Validators.required, Validators.min(-90), Validators.max(90)]],
-        lon: [-79, [Validators.required, Validators.min(-90), Validators.max(90)]],
+        lon: [-79, [Validators.required, Validators.min(-180), Validators.max(180)]],
       }),
 
       pv_text_formgroup: fb.group({
@@ -47,6 +53,8 @@ export class InputformComponent implements OnInit {
       }),
 
       isUsingPVEstimation: true,
+
+      errorMsg: ""
     };
 
     this.step_2 = {
@@ -76,7 +84,6 @@ export class InputformComponent implements OnInit {
         estimation_type: ["eue", Validators.required],
         pv_price_per_kw: [2000, [Validators.required, Validators.min(0)]],
         battery_price_per_kwh: [500, [Validators.required, Validators.min(0)]],
-        epsilon_target: [0.05, [Validators.required, Validators.min(0), Validators.max(1)]],
         confidence_level: [0.95, [Validators.required, Validators.min(0.5), Validators.max(1)]],
         days_in_sample: [100, [Validators.required, Validators.min(0)]],
       })
@@ -88,6 +95,47 @@ export class InputformComponent implements OnInit {
 
   id(i) {
     return i;
+  }
+
+  step_1_inferLocationUsingIP() {
+    try {
+      this.api.getLocationFromIP()
+          .subscribe(ipLocation => {
+            if (ipLocation.success) {
+              this.step_1.address_formgroup.patchValue({
+                city: `${ipLocation.data.city}, ${ipLocation.data.region}, ${ipLocation.data.country}`
+              });
+              this.step_1.location_formgroup.patchValue({
+                lat: ipLocation.data.lat,
+                lon: ipLocation.data.lon
+              });
+            } else {
+              throw "IP Location Detection Failed. Please try autofill your location using your city or manually enter lat/lon."
+            }
+          });
+    } catch (err) {
+      this.step_1.errorMsg = err;
+    }
+  }
+
+  step_1_inferLocationUsingAddress(address: string) {
+    let addr: string = this.step_1.address_formgroup.value.city;
+    try {
+      this.api.getLocationFromAddress(addr)
+          .subscribe(addrLocation => {
+            if (addrLocation.success) {
+              let loc = addrLocation.data[0];
+              this.step_1.location_formgroup.patchValue({
+                lat: loc.latLng.lat,
+                lon: loc.latLng.lng
+              });
+            } else {
+              throw "Location Detection Failed. Please try autofill your location using your IP or manually enter lat/lon."
+            }
+          });
+    } catch (err) {
+      this.step_1.errorMsg = err;
+    }
   }
 
   step_1_onChangePVInput() {
@@ -152,7 +200,7 @@ export class InputformComponent implements OnInit {
     console.log(requestBody);
 
     this.api
-      .postData(requestBody)
+      .getPVSize(requestBody)
       .subscribe(res => {
         this.resultMsg = JSON.stringify(res, null, 2);
       });
