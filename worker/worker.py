@@ -21,8 +21,7 @@ PVWATTS_DATASETS = ["tmy2", "tmy3", "nsrdb", "intl"]
 
 SIMULATE_NUM_LOAD_TRACE = 4
 
-SIZING_LOSS_TARGETS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-# SIZING_LOSS_TARGETS = [0.01, 0.05, 0.1, 0.2, 0.5, 0.8]
+SIZING_LOSS_TARGETS = [0.01, 0.05, 0.1, 0.15, 0.25, 0.5, 0.75]
 ##############################  END:CONSTANTS  ##############################
 
 
