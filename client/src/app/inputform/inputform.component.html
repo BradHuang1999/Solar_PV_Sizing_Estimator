@@ -8,51 +8,87 @@
   <mat-step [stepControl]="step_1.isUsingPVEstimation ? step_1.location_formgroup : step_1.pv_text_formgroup">
     <ng-template matStepLabel>{{ step_1.isUsingPVEstimation ? 'My Location' : 'Hourly PV Radiation File' }}</ng-template>
 
-    <div class="row">
-      <button mat-raised-button (click)="step_1_onChangePVInput()">
-        {{ step_1.isUsingPVEstimation ? 'Manually Input PV Generation Parameters Instead' : 'Use Location Instead' }}
-      </button>
-    </div>
-
     <div>
       <div *ngIf="step_1.isUsingPVEstimation">
-        <div class="row">
+        <div class="input_row">
           <label>First, your location please...</label>
         </div>
 
-        <div class="row">
-          <button mat-raised-button (click)="step_1_inferLocationUsingIP()">Fill Location Using my IP Address</button>
-        </div>
-        
-        <div class="row">
-          <form [formGroup]="step_1.address_formgroup">
-            <mat-form-field>
-              <mat-label>Your City</mat-label>
-              <input matInput formControlName="city"
-                      placeholder="Seattle, WA, United States...">
-            </mat-form-field>
-            <button mat-raised-button (click)="step_1_inferLocationUsingAddress()">Autofill Location Using my City</button>
-          </form>
-        </div>
-        
-        <div class="row">
-          <form [formGroup]="step_1.location_formgroup">
-            <mat-form-field>
-              <mat-label>Latitude</mat-label>
-              <input matInput required type="number" formControlName="lat"
-                      placeholder="+ for N, - for S, [-90, 90]">
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>Longitude</mat-label>
-              <input matInput required type="number" formControlName="lon"
-                      placeholder="+ for E, - for W, [-90, 90]">
-            </mat-form-field>
-          </form>
-        </div>
+        <mat-card class="input-card">
+          <mat-card-header>
+            <mat-card-title>Your Location</mat-card-title>
+          </mat-card-header>
+  
+          <mat-card-content>
+            <p>
+              <b>Location:</b>
+              Your location is needed to compute how much electricity your solar panels can generate. Enter your locations using one of the following ways:
+            </p>
 
-        <div class="row" style="color: red;">
-          {{this.step_1.errorMsg}}
-        </div>
+            <div class="input_row">
+              <mat-label class="fill-instruction">Autofill location using your IP address: </mat-label>
+              <button mat-raised-button (click)="step_1_inferLocationUsingIP()">Detect Location</button>
+            </div>
+
+            <div class="or"> OR </div>
+            
+            <div class="input_row">
+              <form [formGroup]="step_1.address_formgroup">
+                <mat-label class="fill-instruction">Enter your city: </mat-label>
+                <mat-form-field style="width: 300px;">
+                  <mat-label>Your City</mat-label>
+                  <input matInput formControlName="city"
+                         placeholder="Seattle, WA, United States...">
+                </mat-form-field>
+                <button mat-raised-button (click)="step_1_inferLocationUsingAddress()">Enter Location</button>
+              </form>
+            </div>
+
+            <div class="or"> OR </div>
+            
+            <div class="input_row">
+              <form [formGroup]="step_1.location_formgroup">
+                <mat-label class="fill-instruction">Enter your latitude and longitude: </mat-label>
+                <mat-form-field style="width: 75px;">
+                  <mat-label>Latitude</mat-label>
+                  <input matInput required type="number" formControlName="lat"
+                          placeholder="+ for N, - for S, [-90, 90]">
+                </mat-form-field>
+                <mat-form-field style="width: 75px;">
+                  <mat-label>Longitude</mat-label>
+                  <input matInput required type="number" formControlName="lon"
+                          placeholder="+ for E, - for W, [-180, 180]">
+                </mat-form-field>
+              </form>
+            </div>
+
+            <div class="or"> OR </div>
+
+            <div class="input_row">
+              <button mat-raised-button (click)="step_1_onChangePVInput()">
+                Manually Input PV Generation Parameters Instead
+              </button>
+            </div>
+
+            <div style="color: red;">
+              {{this.step_1.errorMsg}}
+            </div>    
+  
+            <mat-accordion multi>
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    Instruction: Location
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+  
+                <div class="instruction-content">
+                  Lorem, ipsum dolor sit amet consectetur adipisicing elit. Sunt dolor voluptates esse quos laudantium placeat culpa aperiam, quisquam voluptas sint quaerat natus eos dolore doloribus reprehenderit eligendi a quasi quia!
+                </div>
+              </mat-expansion-panel>
+            </mat-accordion>
+          </mat-card-content>
+        </mat-card>
 
         <div>
           <button mat-raised-button color="primary" matStepperNext
@@ -61,6 +97,12 @@
       </div>
 
       <form [formGroup]="step_1.pv_text_formgroup" *ngIf="!step_1.isUsingPVEstimation">
+        <div class="input_row">
+          <button mat-raised-button (click)="step_1_onChangePVInput()">
+            Use Location Instead
+          </button>
+        </div>
+    
         <div class="subrow">
           <input type="file" id="pv_file"
                  (change)="step_1_onPVFileChange($event.target.files)">
@@ -85,68 +127,356 @@
     <ng-template matStepLabel>Solar Panel Parameters</ng-template>
     
     <form [formGroup]="step_2.pv_params_formgroup">
-      <div class="row">
-        <div>
-          <div>
-            <label>Panel Position</label>
-          </div>
-          <div class="subrow">
-            <mat-form-field>
-              <mat-label>Tilt</mat-label>
-              <input type="number"
-                    matInput required
-                    placeholder="[0, 90]"
-                    formControlName="pv_tilt">
-            </mat-form-field>
-          </div>
-          <div>
-            <mat-form-field>
-              <mat-label>Azimuth</mat-label>
-              <input type="number"
-                    matInput required
-                    placeholder="0 = N, 90 = E, 180 = S, 270 = W. [0, 360)"
-                    formControlName="pv_azimuth">
-            </mat-form-field>
-          </div>
-        </div>
 
-        <div>
-          <div>
-            <label>Solar Panel Type</label>
-          </div>
-          <div class="subrow">
-            <mat-form-field>
-              <mat-label>System Losses</mat-label>
-              <input type="number"
-                    matInput required
-                    placeholder="Percentage, [0, 99]"
-                    formControlName="pv_losses">
-            </mat-form-field>
-          </div>
-          <div class="subrow">
-            <mat-form-field>
-              <mat-label>Module Type</mat-label>
-              <mat-select matInput required formControlName="pv_module_type">
-                <mat-option value="0">Standard</mat-option>
-                <mat-option value="1">Premium</mat-option>
-                <mat-option value="2">Thin film</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-          <div class="subrow">
-            <mat-form-field>
-              <mat-label>Array Type</mat-label>
-              <mat-select matInput required formControlName="pv_array_type">
-                <mat-option value=0>Fixed - Open Rack</mat-option>
-                <mat-option value=1>Fixed - Roof Mounted</mat-option>
-                <mat-option value=2>1-Axis</mat-option>
-                <mat-option value=3>1-Axis Backtracking</mat-option>
-                <mat-option value=4>2-Axis</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-        </div>
-      </div>
+      <label>Parameters of your solar panel.</label>
+
+      <mat-card class="input-card">
+        <mat-card-header>
+          <mat-card-title>Solar Panel Position</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <p>
+            <b>Tilt:</b>
+            The tilt angle is the angle from horizontal of the solar panel.
+            The optimal angle, if possible, is the absolute value of the latitude of your location.
+            See below for detailed instruction.
+          </p>
+
+          <p>
+            <b>Azimuth:</b>
+            For a fixed array, the azimuth angle is the <b>angle clockwise from true north</b> describing the direction that the array faces.
+            An azimuth angle of 180° is for a south-facing array, and an azimuth angle of zero degrees is for a north-facing array.
+            See below for detailed instruction.
+          </p>
+  
+          <mat-form-field>
+            <mat-label>Tilt (degrees)</mat-label>
+            <input type="number"
+                  matInput required
+                  placeholder="[0, 90]"
+                  formControlName="pv_tilt">
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Azimuth (degrees)</mat-label>
+            <input type="number"
+                  matInput required
+                  placeholder="0 = N, 90 = E, 180 = S, 270 = W. [0, 360)"
+                  formControlName="pv_azimuth">
+          </mat-form-field>
+
+          <mat-accordion multi>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: Tilt
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>The tilt angle is the angle from horizontal of the photovoltaic modules in the array. For a fixed array, the tilt angle is the angle from horizontal of the array where 0° = horizontal, and 90° = vertical. For arrays with one-axis tracking, the tilt angle is the angle from horizontal of the tracking axis. The tilt angle does not apply to arrays with two-axis tracking.</p>
+                <p>The PVWatts<sup>®</sup> default value for the tilt angle depends on the array type: For a fixed array, the default value is 20 degrees, and for one-axis tracking the default value is zero. A common rule of thumb for fixed arrays is to set the tilt angle to the latitude of the system's location to maximize the system's total electrical output over the year.  Use a lower tilt angle favor peak production in the summer months when the sun is high in the sky, or a higher tilt angle to increase output during winter months. Higher tilt angles tend to cost more for racking and mounting hardware, and may increase the risk of wind damage to the array.</p>
+                <p>For an array installed on a building's roof, you may want to choose a tilt angle equal to the roof pitch. Use the table below to convert roof pitch in ratio of rise (vertical) over run (horizontal) to tilt angle.</p>
+                <table>
+                  <caption>Photovoltaic array tilt angle for different roof pitches</caption>
+                  <tbody><tr>
+                  <th>Roof Pitch (rise/run)</th>
+                  <th>Tilt Angle (deg)</th>
+                  </tr>
+                  <tr>
+                  <td>4/12</td>
+                  <td>18.4</td>
+                  </tr>
+                  <tr>
+                  <td>5/12</td>
+                  <td>22.6</td>
+                  </tr>
+                  <tr>
+                  <td>6/12</td>
+                  <td>26.6</td>
+                  </tr>
+                  <tr>
+                  <td>7/12</td>
+                  <td>30.3</td>
+                  </tr>
+                  <tr>
+                  <td>8/12</td>
+                  <td>33.7</td>
+                  </tr>
+                  <tr>
+                  <td>9/12</td>
+                  <td>36.9</td>
+                  </tr>
+                  <tr>
+                  <td>10/12</td>
+                  <td>39.8</td>
+                  </tr>
+                  <tr>
+                  <td>11/12</td>
+                  <td>42.5</td>
+                  </tr>
+                  <tr>
+                  <td>12/12</td>
+                  <td>45.0</td>
+                  </tr>
+                  </tbody></table>
+              </div>
+            </mat-expansion-panel>
+
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: Azimuth
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>For a fixed array, the azimuth angle is the angle clockwise from true north describing the direction that the array faces. An azimuth angle of 180° is for a south-facing array, and an azimuth angle of zero degrees is for a north-facing array.</p>
+                <p>For an array with one-axis tracking, the azimuth angle is the angle clockwise from true north of the axis of rotation. The azimuth angle does not apply to arrays with two-axis tracking.</p>
+                <p>The default value is an azimuth angle of 180° (south-facing) for locations in the northern hemisphere and 0° (north-facing) for locations in the southern hemisphere. These values typically maximize electricity production over the year, although local weather patterns may cause the optimal azimuth angle to be slightly more or less than the default values. For the northern hemisphere, increasing the azimuth angle favors afternoon energy production, and decreasing the azimuth angle favors morning energy production. The opposite is true for the southern hemisphere.</p>
+                <table>
+                  <caption>Azimuth angles for different compass headings</caption>
+                  <tbody><tr>
+                  <th>Heading</th>
+                  <th>Azimuth Angle</th>
+                  </tr>
+                  <tr>
+                  <td>N</td>
+                  <td>0°</td>
+                  </tr>
+                  <tr>
+                  <td>NE</td>
+                  <td>45°</td>
+                  </tr>
+                  <tr>
+                  <td>E</td>
+                  <td>90°</td>
+                  </tr>
+                  <tr>
+                  <td>SE</td>
+                  <td>135°</td>
+                  </tr>
+                  <tr>
+                  <td>S</td>
+                  <td>180°</td>
+                  </tr>
+                  <tr>
+                  <td>SW</td>
+                  <td>225°</td>
+                  </tr>
+                  <tr>
+                  <td>W</td>
+                  <td>270°</td>
+                  </tr>
+                  <tr>
+                  <td>NW</td>
+                  <td>315°</td>
+                  </tr>
+                  </tbody></table>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="input-card">
+        <mat-card-header>
+          <mat-card-title>Solar Panel System Losses</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <p>
+            <b>System Losses:</b>
+            The system losses account for performance losses you would expect in a real system that are not explicitly calculated by the PVWatts® model equations. 
+            See below for detailed instruction.
+          </p>
+
+          <mat-form-field>
+            <mat-label>System Losses (%)</mat-label>
+            <input type="number"
+                  matInput required
+                  placeholder="%, [0, 99]"
+                  formControlName="pv_losses">
+          </mat-form-field>
+
+          <mat-accordion multi>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: System Losses
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>The system losses account for performance losses you would expect in a real system that are not explicitly calculated by the PVWatts<sup>®</sup> model equations.</p>
+                
+                <p>The default value for the system losses of 14% is based on the categories in the table below, and calculated as follows:</p>
+                
+                <p style="text-align: center;">
+                  100% × [ 1- ( 1 - 0.02 ) × ( 1 - 0.03 ) × ( 1 - 0.02 ) × ( 1 - 0.02 ) × <br>
+                  ( 1 - 0.005 ) × ( 1 - 0.015) × ( 1- 0.01 ) × ( 1 - 0.03) ] = 14%
+                </p>
+                                
+                <p>PVWatts<sup>®</sup> calculates temperature-related losses as a function of the cell temperature, so you should not include temperature loss in the system loss percentage.</p>
+                
+                <p>If you want to use a value other than the default, you can specify values for the categories listed in the table below and calculate the new total value as above.</p>
+                
+                <table>
+                  <caption>Default values for the system loss categories</caption>
+                  <tbody><tr>
+                  <th>Category</th>
+                  <th>Default Value (%)</th>
+                  </tr>
+                  <tr>
+                  <td>Soiling</td>
+                  <td>2</td>
+                  </tr>
+                  <tr>
+                  <td>Shading</td>
+                  <td>3</td>
+                  </tr>
+                  <tr>
+                  <td>Snow</td>
+                  <td>0</td>
+                  </tr>
+                  <tr>
+                  <td>Mismatch</td>
+                  <td>2</td>
+                  </tr>
+                  <tr>
+                  <td>Wiring</td>
+                  <td>2</td>
+                  </tr>
+                  <tr>
+                  <td>Connections</td>
+                  <td>0.5</td>
+                  </tr>
+                  <tr>
+                  <td>Light-Induced Degradation</td>
+                  <td>1.5</td>
+                  </tr>
+                  <tr>
+                  <td>Nameplate Rating</td>
+                  <td>1</td>
+                  </tr>
+                  <tr>
+                  <td>Age</td>
+                  <td>0</td>
+                  </tr>
+                  <tr>
+                  <td>Availability</td>
+                  <td>3</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="input-card">
+        <mat-card-header>
+          <mat-card-title>Solar Panel Type</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <p>
+            <b>Module Type:</b>
+            The module type describes the type of photovoltaic film used in the solar panel.
+            See below for detailed instruction.
+          </p>
+
+          <p>
+            <b>Array Type:</b>
+            The array type describes whether the solar panel in the array are fixed, or whether they move to track the movement of the sun across the sky with one or two axes of rotation.
+            See below for detailed instruction.
+          </p>
+          
+          <mat-form-field>
+            <mat-label>Module Type</mat-label>
+            <mat-select matInput required formControlName="pv_module_type">
+              <mat-option value="0">Standard</mat-option>
+              <mat-option value="1">Premium</mat-option>
+              <mat-option value="2">Thin film</mat-option>
+            </mat-select>
+          </mat-form-field>
+          
+          <mat-form-field>
+            <mat-label>Array Type</mat-label>
+            <mat-select matInput required formControlName="pv_array_type">
+              <mat-option value=0>Fixed - Open Rack</mat-option>
+              <mat-option value=1>Fixed - Roof Mounted</mat-option>
+              <mat-option value=2>1-Axis</mat-option>
+              <mat-option value=3>1-Axis Backtracking</mat-option>
+              <mat-option value=4>2-Axis</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-accordion multi>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: Module Type
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>The module type describes the photovoltaic modules in the array. If you do not have information about the modules in the system, use the default Standard module type. Otherwise, you can use information from the module data sheet and the table below to choose the module type.</p>
+                <table>
+                  <caption>Module Type Options</caption>
+                  <tbody><tr>
+                  <th>PVWatts<sup>®</sup> Module Type</th>
+                  <th>Cell Material</th>
+                  <th>Approximate Nominal Efficiency</th>
+                  <th>Module Cover</th>
+                  <th>Temperature Coefficient of Power</th>
+                  </tr>
+                  <tr>
+                  <td>Standard</td>
+                  <td>Crystalline Silicon</td>
+                  <td>15%</td>
+                  <td>Glass</td>
+                  <td>-0.47 %/°C</td>
+                  </tr>
+                  <tr>
+                  <td>Premium</td>
+                  <td>Crystalline Silicon</td>
+                  <td>19%</td>
+                  <td>Glass with anti-reflective coating</td>
+                  <td>-0.35 %/°C</td>
+                  </tr>
+                  <tr>
+                  <td>Thin Film</td>
+                  <td>Thin film</td>
+                  <td>10%</td>
+                  <td>Glass</td>
+                  <td>-0.20 %/°C</td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </mat-expansion-panel>
+
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: Array Type
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>The array type describes whether the PV modules in the array are fixed, or whether they move to track the movement of the sun across the sky with one or two axes of rotation. The default value is for a fixed array, or one with no tracking. Use the following diagrams to choose the appropriate option for your system:</p>
+                <figure>
+                  <img width="500px;" src="assets/img/pv_array_type.png" alt="Diagram of the three tracking options available in PVWatts®.">
+                  <figcaption>Fixed Open and Roof Mount Options</figcaption>
+                </figure>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
 
       <div>
         <button mat-raised-button color="primary" matStepperPrevious>Back</button>
@@ -159,18 +489,18 @@
   <mat-step [stepControl]="step_3.isUsingLoadEstimation ? step_3.load_estimation_formgroup : step_3.load_text_formgroup">
     <ng-template matStepLabel>Electricity Load Estimation</ng-template>
 
-    <div class="row">
+    <div class="input_row">
       <button mat-raised-button (click)="step_3_onChangeLoadInput()">
         {{ step_3.isUsingLoadEstimation ? 'Manually Input Hourly Load Parameters Instead' : 'Use Load Estimation Instead' }}
       </button>  
     </div>  
 
     <form [formGroup]="step_3.load_estimation_formgroup" *ngIf="step_3.isUsingLoadEstimation">
-      <div class="row">
+      <div class="input_row">
         <div>
           <label>Enter your monthly electricity load in kWh:</label>
         </div>
-        <div class="subrow">
+        <div>
           <mat-form-field formArrayName="load_monthly"
                           *ngFor="let ctrl of step_3.load_estimation_formgroup.controls.load_monthly.value; let i = index; trackBy: id">
             <input required matInput type="number" placeholder="{{ months[i] }}" [formControlName]="i">
@@ -210,41 +540,214 @@
     <ng-template matStepLabel>Estimation Parameters</ng-template>
     
     <form [formGroup]="step_4.est_params_formgroup">
-      <mat-form-field>
-        <input type="number" matInput required
-               formControlName="pv_price_per_kw"
-               placeholder="PV cost per KW">
-      </mat-form-field>
-  
-      <mat-form-field>
-        <input type="number" matInput required
-               formControlName="battery_price_per_kwh"
-               placeholder="Battery cost per KWh">
-      </mat-form-field>
-  
-      <mat-form-field>
-        <input type="number" matInput required
-               formControlName="confidence_level"
-               placeholder="Confidence Level, [0.5, 1]">
-      </mat-form-field>
-    
-      <mat-form-field>
-        <input type="number" matInput required
-               formControlName="days_in_sample"
-               placeholder="Days In Sample">
-      </mat-form-field>
+      <mat-card class="input-card">
+        <mat-card-header>
+          <mat-card-title>System Costs</mat-card-title>
+        </mat-card-header>
 
-      <div class="radioButton">
-        <div class="radioLabel">
-          <label>Estimation Type</label>
-        </div>
-        <div>
-          <mat-radio-group aria-label="Estimation Type" formControlName="estimation_type">
-            <mat-radio-button value="lolp">LOLP</mat-radio-button><br>
-            <mat-radio-button value="eue">EUE</mat-radio-button><br>
-          </mat-radio-group>
-        </div>
-      </div>
+        <mat-card-content>
+          <p>
+            <b>System Costs:</b>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut, corrupti earum dolores
+          </p>
+
+          <div class="input_row">
+            <mat-form-field>
+              <input type="number" matInput required
+                    formControlName="pv_price_per_kw"
+                    placeholder="PV Cost per KW">
+            </mat-form-field>
+        
+            <mat-form-field>
+              <input type="number" matInput required
+                    formControlName="battery_price_per_kwh"
+                    placeholder="Battery Cost per KWh">
+            </mat-form-field>
+          </div>
+
+          <mat-accordion multi>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: PV Cost
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
+              </div>
+            </mat-expansion-panel>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: Battery Cost
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="input-card">
+        <mat-card-header>
+          <mat-card-title>System Capacity</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <p>
+            <b>System Capacity:</b>
+            Maximum number of solar panels (in terms of kW) or batteries (in terms of kWh) available for installation, constrained by physical rooftop or storage sizes.
+          </p>
+
+          <div class="input_row">
+            <mat-form-field>
+              <input type="number" matInput required
+                    formControlName="pv_max_kw"
+                    placeholder="PV Capacity (kW)">
+            </mat-form-field>
+        
+            <mat-form-field>
+              <input type="number" matInput required
+                    formControlName="battery_max_kwh"
+                    placeholder="Battery Capacity (KWh)">
+            </mat-form-field>
+          </div>
+
+          <mat-accordion multi>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: PV Capacity
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
+              </div>
+            </mat-expansion-panel>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Instruction: Battery Capacity
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="input-card">
+        <mat-card-header>
+          <mat-card-title>Estimation Metrics</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <p>
+            <b>Estimation Metrics:</b>
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut, corrupti earum dolores
+          </p>
+
+          <div class="input_row">
+            <mat-radio-group aria-label="Estimation Metric" formControlName="estimation_type">
+              <mat-radio-label class="fill-instruction">Choose One: </mat-radio-label>
+              <mat-radio-button value="eue">Unmet Load</mat-radio-button>
+              <mat-radio-button value="lolp">Loss Of Load Probability</mat-radio-button>
+            </mat-radio-group>
+          </div>
+    
+          <mat-accordion multi>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Explanation: Unmet Load
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
+              </div>
+            </mat-expansion-panel>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Explanation: Loss Of Load Probability
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+
+              <div class="instruction-content">
+                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
+              </div>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-accordion>
+        <mat-expansion-panel class="input-card">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Advanced Parameters
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <div class="input-card-content">
+            <p>
+              <b>Confidence Level:</b>
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut, corrupti earum dolores
+            </p>
+
+            <p>
+              <b>Days In Sample:</b>
+              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut, corrupti earum dolores
+            </p>
+
+            <mat-form-field>
+              <input type="number" matInput required
+                    formControlName="confidence_level"
+                    placeholder="Confidence Level, [0.5, 1]">
+            </mat-form-field>
+          
+            <mat-form-field>
+              <input type="number" matInput required
+                    formControlName="days_in_sample"
+                    placeholder="Days In Sample">
+            </mat-form-field>
+          
+            <mat-accordion multi>
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    Instruction: Confidence Level
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+
+                <div class="instruction-content">
+                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
+                </div>
+              </mat-expansion-panel>
+              <mat-expansion-panel>
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    Instruction: Days In Sample
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+
+                <div class="instruction-content">
+                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
+                </div>
+              </mat-expansion-panel>
+            </mat-accordion>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
     </form>
 
     <div>
@@ -256,8 +759,21 @@
   <mat-step>
     <ng-template matStepLabel>Results</ng-template>
 
-    <div *ngIf="resultMsg !== ''" class="row">
-      <pre>{{this.resultMsg}}</pre>
+    <div *ngIf="result_ready" class="input_row">
+      <google-chart [title]="'Target vs. System'"
+                    [type]="'LineChart'"
+                    [data]="chart_data"
+                    [columns]="['Target', 'Battery Size (KWh)', 'Solar Panel (KW)', 'Cost ($)']"
+                    [options]="chart_options">
+      </google-chart>
+      <pre>{{this.result_msg}}</pre>
+    </div>
+
+    <div *ngIf="!result_ready" class="input_row">
+      <mat-progress-spinner mode="indeterminate" diameter="70"></mat-progress-spinner>
+      <div style="position:relative; top: -43px; left: 90px;">
+        <mat-label style="font-size: 16px;">Loading... The calculation process may take up to a minute.</mat-label>
+      </div>
     </div>
 
     <div>

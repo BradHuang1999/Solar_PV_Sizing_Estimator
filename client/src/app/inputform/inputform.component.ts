@@ -30,8 +30,11 @@ export class InputformComponent implements OnInit {
     est_params_formgroup: FormGroup;
   }
 
-  validationMsg: string = "";
-  resultMsg: string = "";
+  validation_msg: string = "";
+  result_msg: string = "";
+  result_ready: boolean = false;
+  chart_data = [];
+  chart_options = {};
 
   months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   load_monthly_examples = [341, 271.6, 244.9, 249, 189.1, 186, 176.7, 195.3, 222, 272.8, 294, 340]
@@ -86,6 +89,8 @@ export class InputformComponent implements OnInit {
         battery_price_per_kwh: [500, [Validators.required, Validators.min(0)]],
         confidence_level: [0.95, [Validators.required, Validators.min(0.5), Validators.max(1)]],
         days_in_sample: [100, [Validators.required, Validators.min(0)]],
+        pv_max_kw: [70, [Validators.required]],
+        battery_max_kwh: [225, [Validators.required]]
       })
     };
   }
@@ -138,6 +143,10 @@ export class InputformComponent implements OnInit {
     }
   }
 
+  temp() {
+    console.log("hello")
+  }
+
   step_1_onChangePVInput() {
     this.step_1.isUsingPVEstimation = !this.step_1.isUsingPVEstimation;
   }
@@ -181,7 +190,7 @@ export class InputformComponent implements OnInit {
   }
 
   onSubmit() {
-    this.resultMsg = "Loading...";
+    this.result_msg = "Loading...";
 
     let requestBody: any = {
       pv: {
@@ -199,10 +208,34 @@ export class InputformComponent implements OnInit {
 
     console.log(requestBody);
 
+    this.chart_options = {
+      width: 700,
+      height: 500,
+      legend: { position: 'top' },
+      series: {
+        0: {targetAxisIndex: 0},
+        1: {targetAxisIndex: 0},
+        2: {targetAxisIndex: 1}
+      },
+      axes: {
+        x: {
+          target: {label: 'Target'}
+        },
+        y: {
+          cost: {label: 'Cost ($)'},
+          battery_solar: {label: 'Battery/Solar PV'}
+        }
+      }
+    };
+
     this.api
       .getPVSize(requestBody)
       .subscribe(res => {
-        this.resultMsg = JSON.stringify(res, null, 2);
+        console.log(res);
+        this.chart_data = res.filter(r => r.success).map(r => [r.target, r.battery_kwh, r.pv_kw, r.total_cost]);
+        console.log(this.chart_data);
+        this.result_ready = true;
+        this.result_msg = JSON.stringify(res, null, 2);
       });
   }
 }

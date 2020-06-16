@@ -5,13 +5,19 @@
     flex-direction: column;
 
     margin: 2rem;
+}
 
-    mat-form-field {
-        margin-right: 3rem;
+.input-card {
+    margin: 20px;
+
+    mat-card-content, div.input-card-content {
+        padding: 0 15%;
+        text-align: center;
     }
 
-    mat-radio-button {
-        margin-top: 0.5rem;
+    p {
+        font-size: 15px;
+        margin: 20px 0;
     }
 }
 
@@ -19,27 +25,77 @@ button {
     margin: 1rem;
 }
 
-.row {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+mat-form-field {
+    font-size: 16px;
+    margin: 0 1rem;
 }
 
-.subrow {
-    padding-top: 10px;
-    padding-bottom: 10px;
+mat-radio-button {
+    font-size: 16px;
+    margin: 0 1rem;
 }
 
-.radioArea{
-    display: flex;
-    margin-top: 1rem;
-
-    .radioButton{
-        margin-right: 2rem;
-        display: flex;
+mat-form-field.mat-form-field-should-float {
+    mat-label {
+        font-size: 20px;
     }
 
-    .radioLabel{
-        padding-top: 0.5rem;
-        padding-right: 1rem;;
+    input.mat-input-element {
+        padding-top: 6px;
     }
+    
+    mat-select {
+        padding-top: 10px;
+    }
+}
+
+mat-accordion {
+    padding: 15px;
+}
+
+mat-expansion-panel {
+    mat-panel-title {
+        font-weight: bold;
+    }
+
+    .instruction-content {
+        text-align: center;
+
+        p {
+            text-align: left;
+        }
+
+        table {
+            display: inline;
+
+            caption {
+                text-align: center;
+            }
+        }
+    }
+}
+
+.input_row {
+    padding: 15px 0;
+    font-size: 16px;
+}
+
+.fill-instruction {
+    font-weight: bold;
+}
+
+.or {
+    display:flex;
+    justify-content:center;
+    align-items: center;
+    color:grey;
+}
+.or:after,
+.or:before {
+    content: "";
+    display: block;
+    background: lightgrey;
+    width: 10%;
+    height: 1px;
+    margin: 0 10px;
 }

@@ -23,6 +23,7 @@
     "@angular/platform-browser": "~9.1.7",
     "@angular/platform-browser-dynamic": "~9.1.7",
     "@angular/router": "~9.1.7",
+    "angular-google-charts": "^1.1.4",
     "minimist": "^1.2.5",
     "rxjs": "~6.5.5",
     "tslib": "^1.11.1",
