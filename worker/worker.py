@@ -136,7 +136,8 @@ async def run_trace_estimation(load_params, pv_params):
 
 
 async def run_robust_sizing(method, estimation_type, pv_price_per_kw, battery_price_per_kwh,
-                            epsilon_target, confidence_level, days_in_sample, load_arr, pv_arr):
+                            pv_max_kw, battery_max_kwh, epsilon_target, confidence_level, days_in_sample,
+                            load_arr, pv_arr):
 
     logging.debug(f"starting run_robust_sizing, method={method}, estimation_type={estimation_type}, epsilon_target={epsilon_target}")
 
@@ -155,6 +156,10 @@ async def run_robust_sizing(method, estimation_type, pv_price_per_kw, battery_pr
     args.append(pv_price_per_kw)
 
     args.append(battery_price_per_kwh)
+
+    args.append(pv_max_kw)
+
+    args.append(battery_max_kwh)
 
     if method == "sim":
         if estimation_type == "lolp":
