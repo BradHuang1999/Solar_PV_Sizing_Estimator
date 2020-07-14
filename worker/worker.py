@@ -222,7 +222,8 @@ def parse_sizing_result(result):
     if returns[2] == float('inf'):
         return {
             "success": 1,
-            "feasible": 0
+            "feasible": 0,
+            "target": target
         }
     else:
         return {
