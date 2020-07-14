@@ -1,4 +1,5 @@
-from os import environ
+from os import environ, getpid
+from datetime import datetime
 import sys
 import numpy as np
 import json
@@ -218,13 +219,30 @@ def parse_sizing_result(result):
 
     returns = list(map(float, out.split("\t")))
 
-    return {
-        "success": 1,
-        "target": target,
-        "battery_kwh": returns[0],
-        "pv_kw": returns[1],
-        "total_cost": returns[2]
-    }
+    if returns[2] == float('inf'):
+        return {
+            "success": 1,
+            "feasible": 0
+        }
+    else:
+        return {
+            "success": 1,
+            "feasible": 1,
+            "target": target,
+            "battery_kwh": returns[0],
+            "pv_kw": returns[1],
+            "total_cost": returns[2]
+        }
+
+
+def save_arr(suffix, arr):
+    time_str = datetime.now().strftime('%y-%m-%d')
+    pid_str = getpid()
+    file_str = f'{time_str}-{pid_str}-{suffix}.txt'
+
+    with open(file_str, 'w+') as file:
+        for row in arr:
+            file.write(f'{row:0.8f}\n')
 
 
 async def main():
@@ -235,6 +253,9 @@ async def main():
 
     load_list, pv_arr = await run_trace_estimation(input_data["load"], input_data["pv"])
     load_arr = np.hstack(load_list)
+
+    # save_arr('pv', pv_arr)
+    # save_arr('load', load_arr)
 
     logging.info("MAIN: trace estimation done, starting robust_sizing")
 
