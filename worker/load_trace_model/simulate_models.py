@@ -67,6 +67,9 @@ class KnnARIMAModelSimulator:
         self.monthly_norm_loads = np.stack(self.monthly_loads["NormLoad"].values, axis=0)
         self.monthly_mean_loads = np.stack(self.monthly_loads["AvgLoad"].values, axis=0)
         self.monthly_norm_ratio = self.monthly_loads["NormRatio"].values
+        self.station_country = self.monthly_loads["Country"].values
+        self.station_state = self.monthly_loads["State"].values
+        self.station_sitename = self.monthly_loads["SiteName"].values
 
         ## train knn model
         self.knn_model = NearestNeighbors(n_neighbors=self.n_neighbors, metric=knn_metric).fit(self.monthly_norm_loads)
@@ -98,7 +101,7 @@ class KnnARIMAModelSimulator:
         return r_gen_hourly + m_traces + s_traces
 
 
-    def simulate_hourly_data(self, sample_monthly_load, num_gen_traces=None, return_knn_station_ids=False):
+    def simulate_hourly_data(self, sample_monthly_load, num_gen_traces=None, return_knn_stations=False):
         """
         Simulates a total of `num_gen_traces` hourly samples from monthly load, based on closest monthly data.
 
@@ -137,7 +140,11 @@ class KnnARIMAModelSimulator:
             if len_gen_samples > 0:
                 gen_hourly[index_gen_samples] = self.__simulate_arma_model(arma_model, len_gen_samples) / knn_ratios[i] * sample_monthly_load_norm_ratio
 
-        if return_knn_station_ids:
-            return (gen_hourly, knn_station_ids)
+        if return_knn_stations:
+            knn_station_countries = self.station_country[knn_indexes]
+            knn_station_state = self.station_state[knn_indexes]
+            knn_station_sitename = self.station_sitename[knn_indexes]
+            knn_stations = list(zip(knn_station_ids, knn_station_countries, knn_station_state, knn_station_sitename))
+            return (gen_hourly, knn_stations)
         else:
             return gen_hourly

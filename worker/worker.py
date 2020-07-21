@@ -36,11 +36,11 @@ async def run_simulate_load_trace(load_monthly_params):
     logging.debug("starting run_simulate_load_trace")
 
     simulator = KnnARIMAModelSimulator(compress_pickle=False)
-    gen_hourly = simulator.simulate_hourly_data(load_monthly_params, SIMULATE_NUM_LOAD_TRACE, False)
+    gen_hourly, knn_stations = simulator.simulate_hourly_data(load_monthly_params, SIMULATE_NUM_LOAD_TRACE, True)
 
     logging.debug("finishing run_simulate_load_trace")
 
-    return gen_hourly
+    return gen_hourly, knn_stations
 
 
 async def run_pv_watts(session, dataset_type, lat, lon,
@@ -253,6 +253,11 @@ async def main():
     input_data = json.loads(sys.stdin.read())
 
     load_list, pv_arr = await run_trace_estimation(input_data["load"], input_data["pv"])
+
+    knn_stations = []
+    if isinstance(load_list, tuple):
+        load_list, knn_stations = load_list
+
     load_arr = np.hstack(load_list)
 
     # save_arr('pv', pv_arr)
@@ -269,7 +274,10 @@ async def main():
 
     logging.info("MAIN: done")
 
-    return list(map(parse_sizing_result, result))
+    return {
+        "knn_stations": knn_stations,
+        "results": list(map(parse_sizing_result, result))
+    }
 
 
 print(json.dumps(asyncio.run(main())))
