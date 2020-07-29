@@ -1,6 +1,6 @@
 <div class="container">
 
-<h2>Solar PV and Battery Cost Estimator</h2> 
+<h2>Solar Panel and Battery Size Calculator</h2> 
 
 <mat-horizontal-stepper linear #stepper>
 
@@ -10,9 +10,38 @@
 
     <div>
       <div *ngIf="step_1.isUsingPVEstimation">
-        <div class="input_row">
-          <label>First, your location please...</label>
-        </div>
+        <mat-card class="input-card">
+          <mat-card-header>
+            <mat-card-title>Welcome!</mat-card-title>
+          </mat-card-header>
+  
+          <mat-card-content style="text-align: left;">
+            <p>
+              This calculator is intended for homeowners and small to medium businesses to determine how many solar panels and how large a storage battery to buy to achieve a certain level of grid independence, based on your location, solar panel parameters, and electricity usages.
+            </p>
+
+            <p>
+              This calculator uses <a href="https://cs.uwaterloo.ca/~fkazhami/papers/synthetic_trace_generation.pdf">machine learning</a> to estimate your hourly electricity usage and a <a href="https://cs.uwaterloo.ca/~fkazhami/papers/robust-practical-approaches-8.pdf">robust statistical algorithm</a> to optimize the amount of solar panels and battery storage needed to fulfill a certain portion of your electricity needs with minimum cost.
+            </p>
+
+            <p>
+              To use this calculator, please prepare the following:
+              <li><b>Your location</b>, in terms of longitude and latitude. Later this page you can also detect your location with your IP address or enter your city.</li>
+              <li><b>Solar panel parameters</b>, including the tilt and azimuth of your solar panel, and what types of panels you intend to install. See detailed instruction at page 2. The parameters and instructions are provided by <a href="https://pvwatts.nrel.gov/pvwatts.php">PVWatts</a>. </li>
+              <li><b>Your electricity statements</b>, up to a year for each month. We are interested in how much electricity (in kWh) you used for each month during the past year, as well as (optionally) the electricity cost for the last entire year.</li>
+              <li><b>Your local system costs</b> for solar panels and batteries. We listed out some sample prices per unit in the US but different region has different costs. <a href="https://www.energysage.com/solar/">EnergySage</a> provides great instructions and example prices.</li>
+            </p>
+
+            <p>
+              Happy planning!
+            </p>
+
+            <p>
+              * This calculator is developed by the <a href="http://iss4e.ca">ISS4E</a> lab from the <a href="http://uwaterloo.ca/">University of Waterloo</a>. 
+            </p>
+
+          </mat-card-content>
+        </mat-card>
 
         <mat-card class="input-card">
           <mat-card-header>
@@ -78,7 +107,7 @@
               <mat-expansion-panel>
                 <mat-expansion-panel-header>
                   <mat-panel-title>
-                    Instruction: Location
+                    More Information: Location
                   </mat-panel-title>
                 </mat-expansion-panel-header>
   
@@ -507,11 +536,6 @@
           </mat-form-field>
         </div>
       </div>
-
-      <div>
-        <button mat-raised-button color="primary" matStepperPrevious>Back</button>
-        <button mat-raised-button color="primary" matStepperNext>Next</button>
-      </div>
     </form>
 
     <form [formGroup]="step_3.load_text_formgroup" *ngIf="!step_3.isUsingLoadEstimation">
@@ -527,12 +551,23 @@
                     placeholder="Hourly Electricity Load"></textarea>
         </mat-form-field>
       </div>
+    </form>
 
-      <div>
-        <button mat-raised-button color="primary" matStepperPrevious>Back</button>
-        <button mat-raised-button color="primary" matStepperNext>Next</button>
+    <form [formGroup]="step_3.yearly_cost_formgroup">
+      <div class="input_row">
+        <label class="fill-instruction">Your yearly electricity cost (optional): </label>
+        <mat-form-field>
+          <input type="number" matInput required	
+                  formControlName="yearly_cost"	
+                  placeholder="Yearly Cost">	
+        </mat-form-field>
       </div>
     </form>
+
+    <div>
+      <button mat-raised-button color="primary" matStepperPrevious>Back</button>
+      <button mat-raised-button color="primary" matStepperNext>Next</button>
+    </div>
   </mat-step>
 
   <!-- Step 4: Estimation Parameters -->
@@ -542,53 +577,165 @@
     <form [formGroup]="step_4.est_params_formgroup">
       <mat-card class="input-card">
         <mat-card-header>
-          <mat-card-title>System Costs</mat-card-title>
+          <mat-card-title>Electricity Target Parameters</mat-card-title>
         </mat-card-header>
 
         <mat-card-content>
-          <p>
+          <p style="text-align:left">
+            <b>Estimation Metrics:</b>
+            <br>
+            <br>
+            If estimation metric is <b>Portion of Electricity Met</b>, then we maximize the portion of electricity that is fulfilled by the solar panels. i.e. we will provide different levels of portions and the amount of solar panels and batteries needed to achieve such portion.
+            <br>
+            <br>
+            If estimation metric is <b>Loss Of Load Probability</b>, then we minimize the portion of <b>time</b> when the electricity is <b>not</b> fulfilled by the solar panels. i.e. a 5% loss target would mean at least 95% of the time, the solar panels will sufficiently generate electricity.
+          </p>
+          
+          <div class="input_row">
+            <mat-radio-group aria-label="Estimation Metric" formControlName="estimation_type">
+              <label class="fill-instruction">Estimation Metrics: </label>
+              <mat-radio-button value="eue">Unmet Load</mat-radio-button>
+              <mat-radio-button value="lolp">Loss Of Load Probability</mat-radio-button>
+            </mat-radio-group>
+          </div>
+
+          <!-- <div class="input_row">
+            <label class="fill-instruction">Loss Target (between 0 and 1): </label>
+            <mat-form-field>
+              <input type="number" matInput required	
+                     formControlName="epsilon_target"	
+                     placeholder="Loss Target">	
+            </mat-form-field>
+          </div> -->
+        </mat-card-content>
+      </mat-card>
+      
+      <mat-card class="input-card">
+        <mat-card-header>
+          <mat-card-title>System Costs</mat-card-title>
+        </mat-card-header>
+  
+        <mat-card-content>
+          <p style="text-align:left">
             <b>System Costs:</b>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut, corrupti earum dolores
+            <br>
+            <br>
+            The cost of the solar panels (in terms of kW) and battery storages (in terms of kWh). Average prices from several popular manufacturers are listed for reference.
           </p>
 
+          <p>
+            <b>Typical prices for solar panels in the US (source from 
+              <a href="https://news.energysage.com/how-much-does-the-average-solar-panel-installation-cost-in-the-u-s/">EnergySage</a>)
+            </b>
+          </p>
+
+          <table>
+            <tbody>
+            <tr>
+            <th>Manufacturer</th>
+            <th>Price Range (6kW system)</th>
+            <th>Price Range (10kW system)</th>
+            <th>Average Price per kW</th>
+            <th>Use this price</th>
+            </tr>
+            <tr>
+              <td>Yingli Solar</td>
+              <td>$13,860 – $17,220</td>
+              <td>$23,100 – $28,700</td>
+              <td>$2,590</td>
+              <td><button mat-raised-button (click)="step_4_set_pv_price(2590)">Use this price</button></td>
+            </tr>
+            <tr>
+            <td>Trina Solar</td>
+            <td>$14,940 – $18,300</td>
+            <td>$24,900 – $30,500</td>
+            <td>$2,770</td>
+            <td><button mat-raised-button (click)="step_4_set_pv_price(2770)">Use this price</button></td>
+            </tr>
+            <tr>
+            <td>LG Solar</td>
+            <td>$15,840 – $19,800</td>
+            <td>$26,400 – $33,000</td>
+            <td>$2,970</td>
+            <td><button mat-raised-button (click)="step_4_set_pv_price(2970)">Use this price</button></td>
+            </tr>
+            </tbody>
+          </table>
+
           <div class="input_row">
-            <mat-form-field>
+            <mat-label class="fill-instruction">Solar Panel Cost per kW: </mat-label>
+            <mat-slider step="10" min="500" max="5000"
+                        formControlName="pv_price_per_kw"
+                        (input)="step_4_set_pv_price($event.value)"
+                        [(ngModel)]="step_4.est_params_formgroup.controls.pv_price_per_kw.value">
+            </mat-slider>
+            <mat-form-field style="width: 75px;">
               <input type="number" matInput required
                     formControlName="pv_price_per_kw"
-                    placeholder="PV Cost per KW">
-            </mat-form-field>
-        
-            <mat-form-field>
-              <input type="number" matInput required
-                    formControlName="battery_price_per_kwh"
-                    placeholder="Battery Cost per KWh">
+                    [(ngModel)]="step_4.est_params_formgroup.controls.pv_price_per_kw.value"
+                    placeholder="$/kW">
             </mat-form-field>
           </div>
 
-          <mat-accordion multi>
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Instruction: PV Cost
-                </mat-panel-title>
-              </mat-expansion-panel-header>
+          <p>
+            <b>Typical prices for battery storage in the US (source from 
+              <a href="https://news.energysage.com/tesla-powerwall-vs-sonnen-eco-vs-lg-chem/">EnergySage</a>
+              and
+              <a href="https://www.solaris-shop.com/lg-chem-resu10h-9-8kwh-primary-lithium-ion-battery/">Solaris</a>)
+            </b>
+          </p>
 
-              <div class="instruction-content">
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
-              </div>
-            </mat-expansion-panel>
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Instruction: Battery Cost
-                </mat-panel-title>
-              </mat-expansion-panel-header>
+          <table>
+            <tbody>
+            <tr>
+            <th>Manufacturer</th>
+            <th>Capacity</th>
+            <th>List Price (without installation cost)</th>
+            <th>Warranty</th>
+            <th>Average Price per kWh</th>
+            <th>Use this price</th>
+            </tr>
+            <tr>
+            <td>Tesla Powerwall</td>
+            <td>13.5 kWh</td>
+            <td>$6700</td>
+            <td>10 years, 70% capacity</td>
+            <td>$496.30</td>
+            <td><button mat-raised-button (click)="step_4_set_battery_price(496.3)">Use this price</button></td>
+            </tr>
+            <tr>
+            <td>LG CHEM RESU10H</td>
+            <td>9.8 kWh</td>
+            <td>$5250</td>
+            <td>10 years, 60% capacity</td>
+            <td>$535.72</td>
+            <td><button mat-raised-button (click)="step_4_set_battery_price(535.72)">Use this price</button></td>
+            </tr>
+            <tr>
+            <td>Sonnen eco</td>
+            <td>4 kWh</td>
+            <td>$9950</td>
+            <td>10 years, 70% capacity</td>
+            <td>$2487.5</td>
+            <td><button mat-raised-button (click)="step_4_set_battery_price(2487.5)">Use this price</button></td>
+            </tr>
+            </tbody>
+          </table>
 
-              <div class="instruction-content">
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
-              </div>
-            </mat-expansion-panel>
-          </mat-accordion>
+          <div class="input_row">
+            <mat-label class="fill-instruction">Battery Storage Cost per kWh: </mat-label>
+            <mat-slider step="10" min="100" max="2500"
+                        formControlName="battery_price_per_kwh"
+                        (input)="step_4_set_battery_price($event.value)"
+                        [(ngModel)]="step_4.est_params_formgroup.controls.battery_price_per_kwh.value">
+            </mat-slider>
+            <mat-form-field style="width: 75px;">
+              <input type="number" matInput required
+                    formControlName="battery_price_per_kwh"
+                    [(ngModel)]="step_4.est_params_formgroup.controls.battery_price_per_kwh.value"
+                    placeholder="$/kWh">
+            </mat-form-field>
+          </div>
         </mat-card-content>
       </mat-card>
 
@@ -598,16 +745,24 @@
         </mat-card-header>
 
         <mat-card-content>
-          <p>
+          <p style="text-align:left">
             <b>System Capacity:</b>
+            <br>
+            <br>
             Maximum number of solar panels (in terms of kW) or batteries (in terms of kWh) available for installation, constrained by physical rooftop or storage sizes.
+            <br>
+            <br>
+            See below for instruction on estimating your system capacity.
+            <br>
+            <br>
+            Leaving this to the default values is fine. The calculator will return the optimal, feasible system that exists within the capacity value. Higher capacity may result in less precise answers, whereas capacity is more likely to generate infeasible results.
           </p>
 
           <div class="input_row">
             <mat-form-field>
               <input type="number" matInput required
                     formControlName="pv_max_kw"
-                    placeholder="PV Capacity (kW)">
+                    placeholder="Solar Panel Capacity (kW)">
             </mat-form-field>
         
             <mat-form-field>
@@ -617,11 +772,11 @@
             </mat-form-field>
           </div>
 
-          <mat-accordion multi>
+          <!-- <mat-accordion multi>
             <mat-expansion-panel>
               <mat-expansion-panel-header>
                 <mat-panel-title>
-                  Instruction: PV Capacity
+                  More Information: Estimating your system capacity
                 </mat-panel-title>
               </mat-expansion-panel-header>
 
@@ -629,64 +784,7 @@
                 <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
               </div>
             </mat-expansion-panel>
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Instruction: Battery Capacity
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-
-              <div class="instruction-content">
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
-              </div>
-            </mat-expansion-panel>
-          </mat-accordion>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="input-card">
-        <mat-card-header>
-          <mat-card-title>Estimation Metrics</mat-card-title>
-        </mat-card-header>
-
-        <mat-card-content>
-          <p>
-            <b>Estimation Metrics:</b>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut, corrupti earum dolores
-          </p>
-
-          <div class="input_row">
-            <mat-radio-group aria-label="Estimation Metric" formControlName="estimation_type">
-              <mat-radio-label class="fill-instruction">Choose One: </mat-radio-label>
-              <mat-radio-button value="eue">Unmet Load</mat-radio-button>
-              <mat-radio-button value="lolp">Loss Of Load Probability</mat-radio-button>
-            </mat-radio-group>
-          </div>
-    
-          <mat-accordion multi>
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Explanation: Unmet Load
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-
-              <div class="instruction-content">
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
-              </div>
-            </mat-expansion-panel>
-            <mat-expansion-panel>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Explanation: Loss Of Load Probability
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-
-              <div class="instruction-content">
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
-              </div>
-            </mat-expansion-panel>
-          </mat-accordion>
+          </mat-accordion> -->
         </mat-card-content>
       </mat-card>
 
@@ -700,13 +798,8 @@
 
           <div class="input-card-content">
             <p>
-              <b>Confidence Level:</b>
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut, corrupti earum dolores
-            </p>
-
-            <p>
-              <b>Days In Sample:</b>
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ut, corrupti earum dolores
+              <b>Confidence Level and Days in Sample:</b>
+              Our algorithm provides a conservative estimate. It guarantees a level of confidence (between 0.5 to 1) such that in any windows of "Days in Sample" days that certain levels of either Portion of Electricity Met or Loss of Load Probability is met.
             </p>
 
             <mat-form-field>
@@ -720,31 +813,6 @@
                     formControlName="days_in_sample"
                     placeholder="Days In Sample">
             </mat-form-field>
-          
-            <mat-accordion multi>
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    Instruction: Confidence Level
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-
-                <div class="instruction-content">
-                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
-                </div>
-              </mat-expansion-panel>
-              <mat-expansion-panel>
-                <mat-expansion-panel-header>
-                  <mat-panel-title>
-                    Instruction: Days In Sample
-                  </mat-panel-title>
-                </mat-expansion-panel-header>
-
-                <div class="instruction-content">
-                  <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente nulla quidem fuga rem, cupiditate autem eos magni vero iusto at sed odit reprehenderit neque iure beatae! Vitae necessitatibus est id.</p>
-                </div>
-              </mat-expansion-panel>
-            </mat-accordion>
           </div>
         </mat-expansion-panel>
       </mat-accordion>
@@ -759,14 +827,93 @@
   <mat-step>
     <ng-template matStepLabel>Results</ng-template>
 
-    <div *ngIf="result_ready" class="input_row">
-      <google-chart [title]="'Target vs. System'"
-                    [type]="'LineChart'"
-                    [data]="chart_data"
-                    [columns]="['Target', 'Battery Size (KWh)', 'Solar Panel (KW)', 'Cost ($)']"
-                    [options]="chart_options">
-      </google-chart>
-      <pre>{{this.result_msg}}</pre>
+    <div *ngIf="result_ready" class="input_row" style="text-align: center;">
+      <div style="text-align: left;">
+        <p>
+          The following chart and table shows a conservative estimate of solar panel, battery, and cost needed to achieve different loss targets. Given the system configuration, you can expect the corresponding remainder portion of the electricity to be provided through the PV system.
+        </p>
+  
+        <p>
+          The table also shows an approximation of the years needed for the system cost to break even, based on you input of yearly electricity cost. Note that it does not account for inflation or system degradation. All results are for reference only.
+        </p>  
+      </div>
+
+      <div>
+        <google-chart [title]="'Target vs. System'"
+          [type]="'LineChart'"
+          [data]="chart_data"
+          [columns]="['Target', 'Battery Size (KWh)', 'Solar Panel (KW)', 'Total Cost ($)']"
+          [options]="chart_options">
+        </google-chart>
+      </div>
+
+      <table mat-table [dataSource]="result_sizing">
+        <ng-container matColumnDef="target">
+          <th *matHeaderCellDef>Portion of Electricity Met</th>
+          <td *matCellDef="let element" style="font-weight: bold;">{{ (1 - element.target) * 100 }}%</td>
+        </ng-container>
+
+        <ng-container matColumnDef="feasible">
+          <th *matHeaderCellDef>Feasible Result?</th>
+          <td *matCellDef="let element">{{ element.success && element.feasible ? 'Yes' : 'No' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="battery_kwh">
+          <th *matHeaderCellDef>Battery Size (KWh)</th>
+          <td *matCellDef="let element" style="color: #6f9654;">{{ element.battery_kwh ? element.battery_kwh.toFixed(1) : 'N/A' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="pv_kw">
+          <th *matHeaderCellDef>Solar Panel (KW)</th>
+          <td *matCellDef="let element" style="color: #1c91c0;">{{ element.pv_kw ? element.pv_kw.toFixed(1) : 'N/A' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="total_cost">
+          <th *matHeaderCellDef>Total Cost ($)</th>
+          <td *matCellDef="let element" style="color: #e7711b;">{{ element.total_cost ? element.total_cost.toFixed(0) : 'N/A' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="breakeven_years">
+          <th *matHeaderCellDef>Years needed to break even</th>
+          <td *matCellDef="let element" style="color: black;">{{ element.breakeven_years ? element.breakeven_years.toFixed(1) : 'N/A' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="result_sizing_display_cols"></tr>
+        <tr mat-row *matRowDef="let row; columns: result_sizing_display_cols;"></tr>      
+      </table>
+
+      <br>
+
+      <div style="text-align: left;">
+        <p>
+          The following table shows the electricity profile in our database that are the closest to your monthly electricity usage profile. We used data for these stations to generate an estimate your hourly electricity usage, which is used in our estimation for solar panel needs. Generally speaking, the closest (in terms of location) these stations are to you, the better the estimation results.
+        </p>
+      </div>
+
+      <table mat-table [dataSource]="knn_stations">
+        <ng-container matColumnDef="station_id">
+          <th *matHeaderCellDef>TMY Station ID</th>
+          <td *matCellDef="let element" style="color: black;">{{ element[0] || 'N/A' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="station_country">
+          <th *matHeaderCellDef>Country</th>
+          <td *matCellDef="let element" style="color: black;">{{ element[1] || 'N/A' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="station_state">
+          <th *matHeaderCellDef>State</th>
+          <td *matCellDef="let element" style="color: black;">{{ element[2] || 'N/A' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="station_name">
+          <th *matHeaderCellDef>Station Name</th>
+          <td *matCellDef="let element" style="color: black;">{{ element[3] || 'N/A' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="knn_stations_display_cols"></tr>
+        <tr mat-row *matRowDef="let row; columns: knn_stations_display_cols;"></tr>
+      </table>
     </div>
 
     <div *ngIf="!result_ready" class="input_row">

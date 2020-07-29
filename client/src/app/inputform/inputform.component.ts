@@ -21,6 +21,7 @@ export class InputformComponent implements OnInit {
   }
 
   step_3: {
+    yearly_cost_formgroup: FormGroup;
     load_estimation_formgroup: FormGroup;
     load_text_formgroup: FormGroup;
     isUsingLoadEstimation: boolean;
@@ -31,13 +32,18 @@ export class InputformComponent implements OnInit {
   }
 
   validation_msg: string = "";
-  result_msg: string = "";
+  result_sizing = [];
   result_ready: boolean = false;
+  knn_stations = [];
+  knn_stations_string: string = "";
   chart_data = [];
   chart_options = {};
 
+  knn_stations_display_cols = ['station_id', 'station_country', 'station_state', 'station_name'];
+
+  result_sizing_display_cols = ['target', 'feasible', 'battery_kwh', 'pv_kw', 'total_cost', 'breakeven_years'];
   months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  load_monthly_examples = [341, 271.6, 244.9, 249, 189.1, 186, 176.7, 195.3, 222, 272.8, 294, 340]
+  load_monthly_examples = [980, 1040, 1100, 1010, 1110, 1110, 1210, 1210, 1270, 1340, 1250, 1260]
 
   constructor(private api: ApicallsService, fb: FormBuilder) {
 
@@ -71,6 +77,10 @@ export class InputformComponent implements OnInit {
     };
 
     this.step_3 = {
+      yearly_cost_formgroup: fb.group({
+        yearly_cost: [this.load_monthly_examples.reduce((a, b) => a + b) * 0.3]
+      }),
+
       load_estimation_formgroup: fb.group({
         load_monthly: fb.array(this.load_monthly_examples.map(m => new FormControl(m, [Validators.required, Validators.min(0)])))
       }),
@@ -87,10 +97,11 @@ export class InputformComponent implements OnInit {
         estimation_type: ["eue", Validators.required],
         pv_price_per_kw: [2000, [Validators.required, Validators.min(0)]],
         battery_price_per_kwh: [500, [Validators.required, Validators.min(0)]],
-        confidence_level: [0.95, [Validators.required, Validators.min(0.5), Validators.max(1)]],
+        // epsilon_target: [0.05, [Validators.required, Validators.min(0), Validators.max(1)]],
+        confidence_level: [0.8, [Validators.required, Validators.min(0.5), Validators.max(1)]],
         days_in_sample: [100, [Validators.required, Validators.min(0)]],
-        pv_max_kw: [70, [Validators.required]],
-        battery_max_kwh: [225, [Validators.required]]
+        pv_max_kw: [20, [Validators.required]],
+        battery_max_kwh: [40, [Validators.required]]
       })
     };
   }
@@ -189,8 +200,20 @@ export class InputformComponent implements OnInit {
     fileReader.readAsText(pvFile);
   }
 
+  step_4_set_pv_price(value: number) {
+    this.step_4.est_params_formgroup.patchValue({
+      pv_price_per_kw: value
+    })
+  }
+
+  step_4_set_battery_price(value: number) {
+    this.step_4.est_params_formgroup.patchValue({
+      battery_price_per_kwh: value
+    })
+  }
+
   onSubmit() {
-    this.result_msg = "Loading...";
+    this.result_ready = false;
 
     let requestBody: any = {
       pv: {
@@ -209,22 +232,31 @@ export class InputformComponent implements OnInit {
     console.log(requestBody);
 
     this.chart_options = {
-      width: 700,
-      height: 500,
+      width: 900,
+      height: 600,
       legend: { position: 'top' },
+      pointSize: 8,
+      pointShape: 'circle',
       series: {
-        0: {targetAxisIndex: 0},
-        1: {targetAxisIndex: 0},
-        2: {targetAxisIndex: 1}
+        0: { targetAxisIndex: 0, color: '#6f9654', lineWidth: 2 },
+        1: { targetAxisIndex: 0, color: '#1c91c0', lineWidth: 2 },
+        2: { targetAxisIndex: 1, color: '#e7711b', lineWidth: 5 }
       },
-      axes: {
-        x: {
-          target: {label: 'Target'}
+      hAxis: {
+        title: 'Portion of Electricity Met (%)',
+        viewWindow: {min: 20, max: 100}
+      },
+      vAxes: {
+        0: {
+          title: 'Battery (kWh)\nSolar PV (kW)',
+          slantedText: true,
+          slantedTextAngle: 45
         },
-        y: {
-          cost: {label: 'Cost ($)'},
-          battery_solar: {label: 'Battery/Solar PV'}
-        }
+        1: {
+          title: 'Cost ($)',
+          slantedText: true,
+          slantedTextAngle: 180
+        },
       }
     };
 
@@ -232,10 +264,25 @@ export class InputformComponent implements OnInit {
       .getPVSize(requestBody)
       .subscribe(res => {
         console.log(res);
-        this.chart_data = res.filter(r => r.success).map(r => [r.target, r.battery_kwh, r.pv_kw, r.total_cost]);
-        console.log(this.chart_data);
+
+        this.chart_data = res.results
+          .filter(r => (r.success && r.feasible))
+          .map(r => [(1 - r.target) * 100, r.battery_kwh, r.pv_kw, r.total_cost]);
+        
+        let yearly_cost = this.step_3.yearly_cost_formgroup.value.yearly_cost;
+        this.result_sizing = res.results
+          .map(r => {
+            let breakeven_years: number;
+            if (yearly_cost !== 0) {
+              breakeven_years = r.total_cost / (yearly_cost * (1 - r.target));
+            }
+            return Object.assign(r, { breakeven_years: breakeven_years });
+          });
+        
+        this.knn_stations = res.knn_stations;
+        this.knn_stations_string = JSON.stringify(this.knn_stations, null, 2);
+
         this.result_ready = true;
-        this.result_msg = JSON.stringify(res, null, 2);
       });
   }
 }

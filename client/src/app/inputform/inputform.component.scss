@@ -99,3 +99,13 @@ mat-expansion-panel {
     height: 1px;
     margin: 0 10px;
 }
+
+table {
+    border-collapse: collapse;
+    text-align: center;
+}
+
+th, td {
+    padding: 8px;
+    border: 1px solid lightgrey;
+}

@@ -17,6 +17,8 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { GoogleChartsModule } from 'angular-google-charts';
@@ -37,6 +39,8 @@ import { GoogleChartsModule } from 'angular-google-charts';
     MatCardModule,
     MatDividerModule,
     MatExpansionModule,
+    MatSliderModule,
+    MatTableModule,
     MatProgressSpinnerModule,
     FormsModule,
     MatButtonModule,
