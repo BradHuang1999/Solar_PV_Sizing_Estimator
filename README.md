@@ -1,4 +1,4 @@
-# Solar_PV_Sizing_Estimator
+# Solar Panel and Battery Size Calculator
 
 Solar Panel and Battery Size Calculator intended for homeowners and small to medium businesses to determine how many solar panels and how large a storage battery to buy to achieve a certain level of grid independence, based on users' location, solar panel parameters, monthly load profile, yearly electricity cost, as well as other estimation parameters.
 
