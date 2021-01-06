@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/BradHuang1999/Solar_PV_Sizing_Estimator#readme",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "child_process": "^1.0.2",
     "cors": "^2.8.5",
     "express": "^4.17.1",
